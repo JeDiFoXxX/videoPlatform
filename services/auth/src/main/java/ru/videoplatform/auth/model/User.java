@@ -13,9 +13,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "login"))
 @NoArgsConstructor
-@Builder
 @AllArgsConstructor
 @Getter
+@Builder
 public class User {
 
     @Id

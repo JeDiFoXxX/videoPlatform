@@ -1,5 +1,6 @@
 --liquibase formatted sql
 --changeset JeDiFox:001_create_users_table
+
 create TABLE users (
         id UUID PRIMARY KEY,
         login VARCHAR(20) NOT NULL UNIQUE,
