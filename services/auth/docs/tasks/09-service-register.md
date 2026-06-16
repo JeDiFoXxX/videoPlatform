@@ -16,7 +16,7 @@
 ## Предусловия
 
 - [06-password-validation.md](./06-password-validation.md)
-- [07-repositories-flyway.md](./07-repositories-flyway.md)
+- [07-repositories-liquibase.md](./07-repositories-liquibase.md)
 
 ## Зависимости
 

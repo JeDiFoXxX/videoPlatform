@@ -1,42 +1,34 @@
-# 07 — Repositories и Flyway-миграции
+# 07 — Repositories и Liquibase-миграции
 
 ## Цель
 
-Spring Data JPA repositories, миграции схемы, seed первого ADMIN.
+Spring Data JPA repositories, changesets для token-таблиц, seed первого ADMIN.
 
+> **Примечание:** таблица `users` и Liquibase bootstrap уже созданы в [00](./00-bootstrap.md) / [02](./02-entity-user.md).  
+> В этой задаче — repositories + changesets для `refresh_tokens`, `blacklisted_tokens` + seed ADMIN.
 
 ## Методология TDD
 
 | Фаза | Действие |
 |------|----------|
-| **Red** | Написать падающий тест → `mvn test` должен упасть |
-| **Green** | Минимальная реализация → тесты зелёные |
-| **Refactor** | Улучшить код, тесты остаются зелёными |
+| **Red** | `UserRepositoryTest` — падает без repository/changesets |
+| **Green** | Repositories + Liquibase changesets |
+| **Refactor** | Общие test-fixtures для seed ADMIN |
 
 ## Предусловия
 
 - [02-entity-user.md](./02-entity-user.md)
 - [03-entity-tokens.md](./03-entity-tokens.md)
+- Liquibase уже в pom ([00](./00-bootstrap.md)): `spring-boot-starter-liquibase`
 
 ## Зависимости (`pom.xml`)
 
-### Добавить
+Дополнительных зависимостей **не** добавлять — достаточно `spring-boot-starter-liquibase` из задачи 00.
 
-```xml
-<dependency>
-    <groupId>org.flywaydb</groupId>
-    <artifactId>flyway-core</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.flywaydb</groupId>
-    <artifactId>flyway-database-postgresql</artifactId>
-</dependency>
-```
-
-### Конфигурация
+### Конфигурация (уже есть)
 
 ```properties
-spring.flyway.enabled=true
+spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
@@ -50,11 +42,13 @@ spring.jpa.hibernate.ddl-auto=validate
 - `repository/RefreshTokenRepository.java` — `Optional<RefreshToken> findByTokenAndRevokedFalse`
 - `repository/BlacklistedTokenRepository.java` — `boolean existsByJti`
 
-### 2. Flyway `V1__init_schema.sql`
+### 2. Liquibase `002_ddl_create_token_tables.sql`
 
-Таблицы: `users`, `refresh_tokens`, `blacklisted_tokens`.
+Таблицы: `refresh_tokens`, `blacklisted_tokens` (FK `refresh_tokens.user_id → users.id`).
 
-### 3. Flyway `V2__seed_admin.sql`
+Подключить в `db.changelog-master.xml`.
+
+### 3. Liquibase `003_seed_admin.sql`
 
 Первая учётная запись ADMIN (логин/пароль из env или фиксированный dev-пароль, хэш BCrypt).
 
@@ -71,8 +65,8 @@ VALUES ('...', 'admin', '$2a$...', 'ADMIN', now());
 
 ## Критерии готовности
 
-- [ ] Flyway применяет миграции при старте
-- [ ] ADMIN создан после миграции
+- [ ] Liquibase применяет changesets при старте
+- [ ] ADMIN создан после seed-changeset
 - [ ] Repository-тесты зелёные
 
 ## Команды проверки

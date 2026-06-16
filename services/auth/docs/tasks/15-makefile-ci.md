@@ -1,24 +1,24 @@
-# 15 ? Actuator, Makefile, Docker, CI
+# 15 — Actuator, Makefile, Docker, CI
 
-## ????
+## Цель
 
-?????????-??????????: health endpoint, ?????? ???????, Docker-????? ? PostgreSQL.
+Продакшен-готовность: health endpoint, единые команды, Docker-образ с PostgreSQL.
 
-## ??????????? TDD
+## Методология TDD
 
-| ???? | ???????? |
+| Фаза | Действие |
 |------|----------|
-| **Red** | `ActuatorHealthIntegrationTest` ? ?????? ??? actuator |
-| **Green** | ?????????? starter, Makefile, Dockerfile |
-| **Refactor** | ??????? ????? CI-???? ? ???????? workflow |
+| **Red** | `ActuatorHealthIntegrationTest` — падает без actuator |
+| **Green** | Подключить starter, Makefile, Dockerfile |
+| **Refactor** | Вынести общие CI-шаги в корневой workflow |
 
-## ???????????
+## Предусловия
 
-- [14-integration-tests.md](./14-integration-tests.md) ? `mvn test` ???????
+- [14-integration-tests.md](./14-integration-tests.md) — `mvn test` зелёный
 
-## ??????????? (`pom.xml`)
+## Зависимости (`pom.xml`)
 
-### ????????: `spring-boot-starter-actuator`
+### Добавить: `spring-boot-starter-actuator`
 
 ```xml
 <dependency>
@@ -27,84 +27,50 @@
 </dependency>
 ```
 
-### ????????????
+### Конфигурация
 
 ```properties
 management.endpoints.web.exposure.include=health,info
 management.endpoint.health.show-details=when_authorized
 ```
 
-## ???? (Red ? Green ? Refactor)
+## Шаги (Red → Green → Refactor)
 
-### Red ? ???? ??????
+### Green — инфраструктура
 
-**????:** `src/test/java/ru/videoplatform/auth/ActuatorHealthIntegrationTest.java`
+**Makefile**, **Dockerfile**, **docker-compose.yml**:
 
-```java
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-class ActuatorHealthIntegrationTest {
-    @Autowired TestRestTemplate rest;
+- `auth` — порт 8081
+- `postgres` — БД `videoplatform_auth`
+- `docker build -t videoplatform/auth:local .`
 
-    @Test
-    void healthIsUp() {
-        // GET /actuator/health ? {"status":"UP"}
-    }
-}
-```
+Корневой `.github/workflows/maven.yml` — `./mvnw verify`.
 
-### Green ? ??????????????
+## Сводка зависимостей по всему плану
 
-**????:** `services/auth/Makefile`
-
-| Target | ??????? |
-|--------|---------|
-| `help` | ?????? ????? |
-| `test` | `./mvnw test` |
-| `verify` | `./mvnw verify` |
-| `run` | `./mvnw spring-boot:run` |
-| `build` | `./mvnw -DskipTests package` |
-| `docker-build` | `docker build -t videoplatform/auth:local .` |
-| `docker-run` | run + ports 8081, postgres |
-
-**Dockerfile** ? multi-stage (JDK 21 build ? JRE 21 run).
-
-**docker-compose.yml** ? `auth` (8081) + `postgres` (`videoplatform_auth`).
-
-???????? `.github/workflows/maven.yml` ? `./mvnw verify`.
-
-### Refactor
-
-- `.dockerignore`, README ? curl-?????????
-- ?????? ?? `docs/spec.md`, `docs/tasks/`
-
-## ?????? ???????????? ?? ????? ?????
-
-| Starter / lib | ?????? |
+| Starter / lib | Задача |
 |---------------|--------|
 | `spring-boot-starter-test` | 00 |
+| `spring-boot-starter-liquibase` | 00 |
 | `spring-boot-starter-validation` | 06 |
-| `flyway-core` | 07 |
 | `jjwt-*` | 08 |
 | `testcontainers-postgresql` | 14 |
 | `spring-boot-starter-actuator` | **15** |
-| jpa, security, webmvc, postgresql | ??? ? ??????? |
 
-## ???????? ??????????
+## Критерии готовности
 
-- [ ] Red: `ActuatorHealthIntegrationTest` ??????? ?? actuator
-- [ ] `/actuator/health` ? UP
-- [ ] `docker build` ???????
-- [ ] GitHub Actions ???????
+- [ ] `/actuator/health` → UP
+- [ ] `docker build` успешен
+- [ ] GitHub Actions зелёный
 
-## ??????? ????????
+## Команды проверки
 
 ```bash
 .\mvnw.cmd test -Dtest=ActuatorHealthIntegrationTest -pl services/auth
-.\mvnw.cmd verify
 docker build -t videoplatform/auth:local services/auth
 curl http://localhost:8081/actuator/health
 ```
 
-## ????????? ??????
+## Связанные задачи
 
-- [00-bootstrap.md](./00-bootstrap.md) ? [14-integration-tests.md](./14-integration-tests.md)
+- [00-bootstrap.md](./00-bootstrap.md) … [14-integration-tests.md](./14-integration-tests.md)

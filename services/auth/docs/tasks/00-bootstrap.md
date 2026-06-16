@@ -3,7 +3,7 @@
 ## Цель
 
 Подготовить каркас: Spring-контекст поднимается, единый набор тестовых зависимостей, базовый `application.properties` 
-с настройками PostgreSQL.
+с настройками PostgreSQL и Liquibase.
 
 ## Методология TDD
 
@@ -17,37 +17,18 @@
 
 - JDK 21, Maven wrapper в репозитории.
 
+## Соглашения проекта
+
+| Тема | Значение |
+|------|----------|
+| Базовый пакет | `ru.videoplatform.auth` |
+| БД (prod/dev) | `videoplatform_auth` |
+| Миграции | **только Liquibase** (Flyway не используем) |
+| Security (до [11](./11-security-config.md)) | Spring Boot генерирует временный пароль в лог — это нормально до явного `SecurityFilterChain` |
+
 ## Зависимости (`pom.xml`)
 
-### Уже есть (не трогать)
-
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-webmvc</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.postgresql</groupId>
-    <artifactId>postgresql</artifactId>
-    <scope>runtime</scope>
-</dependency>
-```
-
-### Добавить: `spring-boot-starter-test`
-
-**Зачем:** JUnit 5, AssertJ, Mockito, `SpringBootTest`, MockMvc — один согласованный BOM.
-
-**Действие:**
-
-1. Добавить:
+### Добавить
 
 ```xml
 <dependency>
@@ -55,14 +36,18 @@
     <artifactId>spring-boot-starter-test</artifactId>
     <scope>test</scope>
 </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-liquibase</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>test</scope>
+</dependency>
 ```
 
-2. **Проверить конфликт** с существующими:
-   - `spring-boot-starter-data-jpa-test`
-   - `spring-boot-starter-security-test`
-   - `spring-boot-starter-webmvc-test`
-
-   Если после `mvn test` всё зелёное — **удалить** три раздельных test-стартерa, оставить только `spring-boot-starter-test`.
+**Не добавлять** отдельный `liquibase-core` — он транзитивно приходит из `spring-boot-starter-liquibase`.
 
 ## Шаги (Red → Green → Refactor)
 
@@ -70,62 +55,31 @@
 
 **Файл:** `src/main/java/ru/videoplatform/auth/AuthApplication.java`
 
-```java
-@SpringBootApplication
-public class AuthApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(AuthApplication.class, args);
-    }
-}
-```
-
 ### 2. `application.properties`
 
-**Файл:** `src/main/resources/application.properties`
-
 ```properties
-spring.application.name=auth
-server.port=8081
-logging.level.ru.videoplatform.auth=INFO
-
 spring.datasource.url=jdbc:postgresql://localhost:5432/videoplatform_auth
-spring.datasource.username=auth
-spring.datasource.password=auth
+spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml
 spring.jpa.hibernate.ddl-auto=validate
-spring.jpa.open-in-view=false
 ```
 
-`ddl-auto=validate` — схема управляется Flyway ([07](./07-repositories-flyway.md)).
+### 3. Тестовый профиль
 
-### 3. Smoke-тест
+**Файл:** `src/test/resources/application-test.properties` — H2 + Liquibase.
 
-**Файл:** `src/test/java/ru/videoplatform/auth/AuthApplicationTests.java`
+**Smoke-тест:** `@SpringBootTest` + `@ActiveProfiles("test")`.
 
-```java
-@SpringBootTest
-class AuthApplicationTests {
+### 4. Security (временно)
 
-    @Test
-    void contextLoads() {
-    }
-}
-```
-
-Для smoke без PostgreSQL — `@SpringBootTest(properties = "spring.autoconfigure.exclude=...")` или Testcontainers в [13](./14-integration-tests.md).
+До [11](./11-security-config.md) в логах: `Using generated security password: ...` — ожидаемо.
 
 ## Критерии готовности
 
-- [ ] `spring-boot-starter-test` добавлен; дубли test-стартеров убраны или обоснованы
-- [ ] `mvn test` — `contextLoads` зелёный (с заглушкой БД или Testcontainers)
-- [ ] `application.properties` содержит datasource и порт 8081
-
-## Команды проверки
-
-```bash
-.\mvnw.cmd test -Dtest=AuthApplicationTests -pl services/auth
-```
+- [ ] `spring-boot-starter-liquibase` без дублирующего `liquibase-core`
+- [ ] `videoplatform_auth`, профиль `test` + `application-test.properties`
+- [ ] `mvn test` — `contextLoads` зелёный
 
 ## Связанные задачи
 
-- **Следующая:** [01-user-role.md](./01-user-role.md)
-- **Миграции:** [07-repositories-flyway.md](./07-repositories-flyway.md)
+- [01-user-role.md](./01-user-role.md)
+- [07-repositories-liquibase.md](./07-repositories-liquibase.md)

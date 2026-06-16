@@ -22,6 +22,9 @@
 
 Без новых — `spring-boot-starter-security` уже в pom.
 
+> **До этой задачи:** Spring Security создаёт временный `UserDetailsService` и пишет в лог  
+> `Using generated security password: ...`. После настройки явного `SecurityFilterChain` это исчезает.
+
 ## Шаги (Red → Green → Refactor)
 
 ### 1. `SecurityConfig`
@@ -79,6 +82,7 @@ public class SecurityConfig {
 
 ## Критерии готовности
 
+- [ ] Явный `SecurityFilterChain` — **нет** generated security password в логах
 - [ ] BCrypt bean зарегистрирован
 - [ ] JWT filter на защищённых маршрутах
 - [ ] Роли ADMIN/TEACHER/STUDENT из claims

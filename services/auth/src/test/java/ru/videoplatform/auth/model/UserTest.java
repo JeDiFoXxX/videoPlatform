@@ -1,6 +1,7 @@
 package ru.videoplatform.auth.model;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -23,7 +25,7 @@ class UserTest {
     void shouldPersistAndReadUserWithLiquibaseSchema() {
         var user = User.builder()
                 .login("teacherLogin")
-                .password("hashPassword")
+                .passwordHash("hashPassword")
                 .role(UserRole.TEACHER)
                 .build();
         entityManager.persist(user);
@@ -32,8 +34,42 @@ class UserTest {
         var savedUser = entityManager.find(User.class, user.getId());
         assertThat(savedUser.getId()).isNotNull();
         assertThat(savedUser.getLogin()).isEqualTo(user.getLogin());
-        assertThat(savedUser.getPassword()).isEqualTo(user.getPassword());
+        assertThat(savedUser.getPasswordHash()).isEqualTo(user.getPasswordHash());
         assertThat(savedUser.getRole()).isEqualTo(user.getRole());
         assertThat(savedUser.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Должен отклонять дубликат login")
+    void shouldRejectDuplicateLogin() {
+        entityManager.persist(User.builder()
+                .login("duplicateLogin")
+                .passwordHash("hash1")
+                .role(UserRole.STUDENT)
+                .build());
+        entityManager.flush();
+
+        entityManager.persist(User.builder()
+                .login("duplicateLogin")
+                .passwordHash("hash2")
+                .role(UserRole.STUDENT)
+                .build());
+
+        assertThatThrownBy(entityManager::flush)
+                .isInstanceOf(PersistenceException.class);
+    }
+
+    @Test
+    @DisplayName("Должен отклонять login длиннее 20 символов")
+    void shouldRejectLoginLongerThan20Characters() {
+        var login = "a".repeat(21);
+        entityManager.persist(User.builder()
+                .login(login)
+                .passwordHash("hashPassword")
+                .role(UserRole.STUDENT)
+                .build());
+
+        assertThatThrownBy(entityManager::flush)
+                .isInstanceOf(PersistenceException.class);
     }
 }

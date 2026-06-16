@@ -2,70 +2,35 @@
 
 ## Цель
 
-JPA-сущность пользователя: логин, BCrypt-хэш пароля, роль.
-
-
-## Методология TDD
-
-| Фаза | Действие |
-|------|----------|
-| **Red** | Написать падающий тест → `mvn test` должен упасть |
-| **Green** | Минимальная реализация → тесты зелёные |
-| **Refactor** | Улучшить код, тесты остаются зелёными |
-
-## Предусловия
-
-- [01-user-role.md](./01-user-role.md)
-
-## Зависимости
-
-Без новых — JPA уже в pom.
+JPA-сущность пользователя: логин, BCrypt-хэш пароля (`passwordHash`), роль.
 
 ## Шаги (Red → Green → Refactor)
 
 ### 1. Entity `User`
 
-**Файл:** `src/main/java/ru/videoplatform/auth/model/User.java`
+| Поле | Колонка |
+|------|---------|
+| `passwordHash` | `password_hash` |
 
-| Поле | Тип | Ограничения |
-|------|-----|-------------|
-| `id` | `UUID` | `@Id`, `@GeneratedValue` |
-| `login` | `String` | unique, max 20, латиница+цифры |
-| `passwordHash` | `String` | BCrypt, не сериализовать наружу |
-| `role` | `UserRole` | `@Enumerated(STRING)` |
-| `createdAt` | `Instant` | `@CreationTimestamp` |
+> `@JsonIgnore` на `passwordHash` — см. [05](./05-dto-response.md) / [12](./12-controller-rest.md).
 
-```java
-@Entity
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "login"))
-public class User { ... }
-```
+### 2. Liquibase changeset для `users`
 
-### 2. Таблица (Flyway — [07](./07-repositories-flyway.md))
+Схема через Liquibase ([00](./00-bootstrap.md)), не Flyway.
 
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    login VARCHAR(20) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+### 3. Тесты `UserTest`
 
-### 3. Unit-тест маппинга
-
-**Файл:** `src/test/java/ru/videoplatform/auth/model/UserEntityTest.java`
-
-- Сохранение и чтение через `@DataJpaTest` (H2 или Testcontainers — см. [13](./14-integration-tests.md)).
+| Кейс | Ожидание |
+|------|----------|
+| persist + read | все поля, включая `passwordHash` |
+| duplicate login | `PersistenceException` |
+| login длиной 21 | `PersistenceException` |
 
 ## Критерии готовности
 
-- [ ] `User` в пакете `model`
-- [ ] `login` unique, `role` — строка в БД
-- [ ] Тест маппинга зелёный
+- [ ] Поле Java: **`passwordHash`**
+- [ ] Тесты persist / duplicate / length зелёные
 
 ## Связанные задачи
 
-- [07-repositories-flyway.md](./07-repositories-flyway.md)
-- [09-service-register.md](./09-service-register.md)
+- [07-repositories-liquibase.md](./07-repositories-liquibase.md)

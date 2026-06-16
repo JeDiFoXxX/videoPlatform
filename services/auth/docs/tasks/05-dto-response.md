@@ -59,11 +59,19 @@ public class AuthResponseDto {
 }
 ```
 
-### 2. Factory в сервисе
+### 2. Безопасность сериализации
+
+Entity `User.passwordHash` **не должен** попадать в JSON-ответы API.
+
+Если `User` когда-либо сериализуется Jackson — добавить `@JsonIgnore` на поле `passwordHash` ([02](./02-entity-user.md)).
+
+DTO ответов содержат только токены, не сущность `User`.
+
+### 3. Factory в сервисе
 
 `AuthService` ([10](./10-service-session.md)) заполняет DTO после успешного login/refresh.
 
-### 3. Unit-тест сериализации
+### 4. Unit-тест сериализации
 
 **Файл:** `src/test/java/ru/videoplatform/auth/dto/AuthResponseDtoTest.java`
 

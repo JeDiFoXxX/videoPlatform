@@ -45,7 +45,7 @@
 | `jti` | `String` | unique, claim JWT |
 | `expiresAt` | `Instant` | TTL = exp access token |
 
-### 3. Flyway (в [07](./07-repositories-flyway.md))
+### 3. Liquibase (в [07](./07-repositories-liquibase.md))
 
 ```sql
 CREATE TABLE refresh_tokens (...);
@@ -65,5 +65,5 @@ CREATE TABLE blacklisted_tokens (...);
 
 ## Связанные задачи
 
-- [07-repositories-flyway.md](./07-repositories-flyway.md)
+- [07-repositories-liquibase.md](./07-repositories-liquibase.md)
 - [10-service-session.md](./10-service-session.md)
