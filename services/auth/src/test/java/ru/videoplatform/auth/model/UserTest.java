@@ -1,12 +1,12 @@
 package ru.videoplatform.auth.model;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UserTest {
 
     @Autowired
-    private EntityManager entityManager;
+    private TestEntityManager entityManager;
 
     @Test
     @DisplayName("Должен успешно сохранять пользователя в таблицу Liquibase и читать его")
@@ -28,10 +28,7 @@ class UserTest {
                 .passwordHash("hashPassword")
                 .role(UserRole.TEACHER)
                 .build();
-        entityManager.persist(user);
-        entityManager.flush();
-        entityManager.clear();
-        var savedUser = entityManager.find(User.class, user.getId());
+        var savedUser = entityManager.persistFlushFind(user);
         assertThat(savedUser.getId()).isNotNull();
         assertThat(savedUser.getLogin()).isEqualTo(user.getLogin());
         assertThat(savedUser.getPasswordHash()).isEqualTo(user.getPasswordHash());
@@ -42,12 +39,11 @@ class UserTest {
     @Test
     @DisplayName("Должен отклонять дубликат login")
     void shouldRejectDuplicateLogin() {
-        entityManager.persist(User.builder()
+        entityManager.persistAndFlush(User.builder()
                 .login("duplicateLogin")
                 .passwordHash("hash1")
                 .role(UserRole.STUDENT)
                 .build());
-        entityManager.flush();
         entityManager.persist(User.builder()
                 .login("duplicateLogin")
                 .passwordHash("hash2")
