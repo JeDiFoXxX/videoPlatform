@@ -6,7 +6,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DtoMappingTest {
+class DtoRequestTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
