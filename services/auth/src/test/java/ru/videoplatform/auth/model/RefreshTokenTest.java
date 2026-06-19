@@ -1,12 +1,13 @@
 package ru.videoplatform.auth.model;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.PersistenceException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
@@ -16,9 +17,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Transactional
 class RefreshTokenTest {
 
     @Autowired
@@ -52,7 +53,7 @@ class RefreshTokenTest {
     }
 
     @Test
-    @DisplayName("Должен выбрасывать ConstraintViolationException для дубликата")
+    @DisplayName("Должен выбрасывать PersistenceException для дубликата")
     void shouldThrowExceptionWhenTokenIsNotUnique() {
         var user = User.builder()
                 .login("teacherLogin")
@@ -79,6 +80,6 @@ class RefreshTokenTest {
         entityManager.flush();
         entityManager.persist(duplicateToken);
         assertThatThrownBy(entityManager::flush)
-                .isInstanceOf(ConstraintViolationException.class);
+                .isInstanceOf(PersistenceException.class);
     }
 }

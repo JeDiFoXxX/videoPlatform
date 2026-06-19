@@ -2,19 +2,19 @@ package ru.videoplatform.auth.model;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Transactional
 class UserTest {
 
     @Autowired
@@ -48,13 +48,11 @@ class UserTest {
                 .role(UserRole.STUDENT)
                 .build());
         entityManager.flush();
-
         entityManager.persist(User.builder()
                 .login("duplicateLogin")
                 .passwordHash("hash2")
                 .role(UserRole.STUDENT)
                 .build());
-
         assertThatThrownBy(entityManager::flush)
                 .isInstanceOf(PersistenceException.class);
     }
@@ -68,7 +66,6 @@ class UserTest {
                 .passwordHash("hashPassword")
                 .role(UserRole.STUDENT)
                 .build());
-
         assertThatThrownBy(entityManager::flush)
                 .isInstanceOf(PersistenceException.class);
     }
