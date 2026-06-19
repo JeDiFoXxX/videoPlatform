@@ -7,4 +7,5 @@
     <include file="classpath:db/changelog/scripts/001_ddl_create_users_table.sql"/>
     <include file="classpath:db/changelog/scripts/002_ddl_create_refresh_tokens.sql"/>
     <include file="classpath:db/changelog/scripts/003_ddl_create_blacklisted_tokens.sql"/>
+    <include file="classpath:db/changelog/scripts/004_dml_seed_admin.sql"/>
 </databaseChangeLog>
