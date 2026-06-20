@@ -20,6 +20,7 @@ public class RegisterDto {
     @JsonProperty("login")
     private String login;
     
+    @NotBlank
     @ValidPassword
     @JsonProperty("password")
     private String password;
