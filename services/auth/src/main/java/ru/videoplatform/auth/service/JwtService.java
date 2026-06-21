@@ -43,14 +43,6 @@ public class JwtService {
                 .compact();
     }
 
-    public Claims parseToken(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
     public String extractJti(String token) {
         try {
             return parseToken(token).getId();
@@ -66,5 +58,13 @@ public class JwtService {
         } catch (JwtException e) {
             return false;
         }
+    }
+
+    private Claims parseToken(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
