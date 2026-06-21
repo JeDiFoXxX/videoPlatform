@@ -30,8 +30,7 @@ public class RefreshToken {
     private User user;
 
     @Column(name = "expires_at", nullable = false)
-    @Builder.Default
-    private Instant expiresAt = Instant.now().plusSeconds(86400 * 30);
+    private Instant expiresAt;
 
     @Builder.Default
     @Column(nullable = false)

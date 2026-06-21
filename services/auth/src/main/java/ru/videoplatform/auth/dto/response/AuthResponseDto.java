@@ -23,6 +23,5 @@ public class AuthResponseDto {
     private String refreshToken;
 
     @JsonProperty("expires_in")
-    @Builder.Default
-    private int expiresIn = 900;
+    private long expiresIn;
 }

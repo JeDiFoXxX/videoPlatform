@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.videoplatform.auth.config.JwtProperties;
 import ru.videoplatform.auth.dto.request.LoginDto;
 import ru.videoplatform.auth.dto.request.RefreshDto;
 import ru.videoplatform.auth.dto.request.RegisterDto;
@@ -30,6 +31,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BlacklistedTokenRepository blacklistedTokenRepository;
+    private final JwtProperties jwtProperties;
 
     @Transactional
     public User registerStudent(RegisterDto dto) {
@@ -52,11 +54,13 @@ public class AuthService {
         var refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .user(user)
+                .expiresAt(Instant.now().plus(jwtProperties.getRefreshTokenLifetime()))
                 .build();
         var savedRefreshToken = refreshTokenRepository.save(refreshToken);
         return AuthResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(savedRefreshToken.getToken())
+                .expiresIn(jwtProperties.getAccessTokenLifetime().toSeconds())
                 .build();
     }
 
@@ -71,6 +75,7 @@ public class AuthService {
         return AuthResponseDto.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(session.getToken())
+                .expiresIn(jwtProperties.getAccessTokenLifetime().toSeconds())
                 .build();
     }
 
@@ -86,7 +91,7 @@ public class AuthService {
         if (jti != null) {
             var blacklist = BlacklistedToken.builder()
                     .jti(jti)
-                    .expiresAt(Instant.now().plusSeconds(900))
+                    .expiresAt(Instant.now().plus(jwtProperties.getAccessTokenLifetime()))
                     .build();
             blacklistedTokenRepository.save(blacklist);
         }

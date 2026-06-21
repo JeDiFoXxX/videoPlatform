@@ -6,9 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
+import ru.videoplatform.auth.config.JwtProperties;
 import ru.videoplatform.auth.dto.request.LoginDto;
 import ru.videoplatform.auth.dto.request.RefreshDto;
 import ru.videoplatform.auth.dto.request.RegisterDto;
@@ -47,6 +49,9 @@ class AuthServiceTest {
     @Mock
     private BlacklistedTokenRepository blacklistedTokenRepository;
 
+    @Spy
+    private JwtProperties jwtProperties = new JwtProperties();
+
     @InjectMocks
     private AuthService authService;
 
@@ -70,6 +75,7 @@ class AuthServiceTest {
                 .build();
         refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
+                .expiresAt(Instant.now().plus(30, ChronoUnit.DAYS))
                 .user(user)
                 .build();
     }
@@ -143,6 +149,7 @@ class AuthServiceTest {
         verify(refreshTokenRepository).save(any());
         assertThat(result.getAccessToken()).isEqualTo("hashed_access_token");
         assertThat(result.getRefreshToken()).isEqualTo(refreshToken.getToken());
+        assertThat(result.getExpiresIn()).isEqualTo(900L);
     }
 
     @Test
@@ -156,6 +163,7 @@ class AuthServiceTest {
         verify(jwtService).generateAccessToken(any());
         assertThat(result.getAccessToken()).isEqualTo("hashed_access_token");
         assertThat(result.getRefreshToken()).isEqualTo(refreshToken.getToken());
+        assertThat(result.getExpiresIn()).isEqualTo(900L);
     }
 
     @Test

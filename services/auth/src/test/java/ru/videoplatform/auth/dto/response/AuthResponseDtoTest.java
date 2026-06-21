@@ -16,6 +16,7 @@ class AuthResponseDtoTest {
         var dto = AuthResponseDto.builder()
                 .accessToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
                 .refreshToken("rfr_987654321_xyz")
+                .expiresIn(900L)
                 .build();
         var jsonResult = objectMapper.writeValueAsString(dto);
         assertThat(jsonResult).contains("\"type\":\"auth_success\"");

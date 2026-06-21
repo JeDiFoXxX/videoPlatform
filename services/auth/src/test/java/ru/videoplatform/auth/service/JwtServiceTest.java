@@ -3,23 +3,34 @@ package ru.videoplatform.auth.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+import ru.videoplatform.auth.config.JwtProperties;
 import ru.videoplatform.auth.model.User;
 import ru.videoplatform.auth.model.UserRole;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
 
+    @Spy
+    private JwtProperties jwtProperties = new JwtProperties();
+
+    @InjectMocks
     private JwtService jwtService;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(
-                "my-super-secret-key-32-symbols-minimum",
-                900);
+        jwtService = new JwtService(jwtProperties);
         user = User.builder()
                 .id(UUID.randomUUID())
                 .login("admin")
@@ -54,10 +65,14 @@ class JwtServiceTest {
     @Test
     @DisplayName("Проверка валидности: просроченный токен (TTL=0) должен возвращать false")
     void shouldReturnFalseWhenTokenIsExpired() {
-        var jwtServiceTest = new JwtService(
-                "my-super-secret-key-32-symbols-minimum",
-                0);
+        JwtProperties expiredProperties = new JwtProperties();
+        ReflectionTestUtils
+                .setField(expiredProperties, "secret", "my-super-secret-key-32-symbols-minimum-length");
+        ReflectionTestUtils
+                .setField(expiredProperties, "accessTokenLifetime", Duration.ZERO);
+        var jwtServiceTest = new JwtService(expiredProperties);
         var token = jwtServiceTest.generateAccessToken(user);
+
         assertThat(jwtServiceTest.isTokenValid(token)).isFalse();
     }
 }

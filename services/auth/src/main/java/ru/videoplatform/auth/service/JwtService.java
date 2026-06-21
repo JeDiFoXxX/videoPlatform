@@ -4,8 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.videoplatform.auth.config.JwtProperties;
 import ru.videoplatform.auth.model.User;
 
 import javax.crypto.SecretKey;
@@ -18,20 +18,18 @@ import java.util.UUID;
 public class JwtService {
 
     private final SecretKey secretKey;
-    private final long accessTokenTtlSeconds;
+    private final JwtProperties jwtProperties;
 
-    public JwtService(
-            @Value("${auth.jwt.secret:my-super-secret-key-32-symbols-minimum-length}") String secret,
-            @Value("${auth.jwt.access-ttl-seconds:900}") long accessTokenTtlSeconds
-    ) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessTokenTtlSeconds = accessTokenTtlSeconds;
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.secretKey = Keys.hmacShaKeyFor(
+                jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(accessTokenTtlSeconds);
-
+        Instant expiresAt = now.plus(jwtProperties.getAccessTokenLifetime());
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(user.getId().toString())
