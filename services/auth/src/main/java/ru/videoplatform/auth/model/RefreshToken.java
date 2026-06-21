@@ -2,6 +2,7 @@ package ru.videoplatform.auth.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Builder
+@Builder(toBuilder = true)
 public class RefreshToken {
 
     @Id
@@ -29,7 +30,8 @@ public class RefreshToken {
     private User user;
 
     @Column(name = "expires_at", nullable = false)
-    private Instant expiresAt;
+    @Builder.Default
+    private Instant expiresAt = Instant.now().plusSeconds(86400 * 30);
 
     @Builder.Default
     @Column(nullable = false)

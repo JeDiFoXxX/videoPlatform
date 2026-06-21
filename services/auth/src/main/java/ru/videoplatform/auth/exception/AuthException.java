@@ -16,4 +16,8 @@ public class AuthException extends ResponseStatusException {
     public static AuthException badRequest(String message) {
         return new AuthException(HttpStatus.BAD_REQUEST, message);
     }
+
+    public static AuthException unauthorized(String message) {
+        return new AuthException(HttpStatus.UNAUTHORIZED, message);
+    }
 }
