@@ -1,30 +1,35 @@
-# 13 ? GlobalExceptionHandler ? ErrorResponse
+# 13 — GlobalExceptionHandler и ErrorResponse
 
-## ????
+## Цель
 
-?????? JSON ??? ??????: 400 (validation + ??????), 401, 403, 409, 500.
+Единый JSON для ошибок API: 400 (validation + business), 401, 403, 409, 500.
 
-## ??????????? TDD
+## Методология TDD
 
-| ???? | ???????? |
+| Фаза | Действие |
 |------|----------|
-| **Red** | MockMvc-????? ?? ?????? `ErrorResponse` ? HTTP-???? ? ?????? ??? handler |
-| **Green** | `AuthException`, `GlobalExceptionHandler`, `ErrorResponse` |
-| **Refactor** | ??????? ??????? ??????, ?????? ???????????? |
+| **Red** | MockMvc-тесты на формат `ErrorResponse` и HTTP-код |
+| **Green** | `GlobalExceptionHandler`, `ErrorResponse` |
+| **Refactor** | Общий factory `ErrorResponse.of(...)` |
 
-## ???????????
+## Предусловия
 
 - [12-controller-rest.md](./12-controller-rest.md)
 
-## ???????????
+## Текущее состояние
 
-??? ?????. `MethodArgumentNotValidException` ? ?? validation starter ([06](./06-password-validation.md)).
+Сейчас `AuthException` extends `ResponseStatusException` ([09](./09-service-register.md)) — Spring отдаёт стандартный JSON ошибки.  
+В этой задаче — **единый** формат ответа для всех ошибок auth API.
 
-## ???? (Red ? Green ? Refactor)
+## Зависимости
 
-### Red ? ????? ???????
+Без новых. `MethodArgumentNotValidException` — validation starter ([06](./06-password-validation.md)).
 
-**????:** `src/test/java/ru/videoplatform/auth/exception/GlobalExceptionHandlerTest.java`
+## Шаги (Red → Green → Refactor)
+
+### Red — тесты первыми
+
+**Файл:** `src/test/java/ru/videoplatform/auth/exception/GlobalExceptionHandlerTest.java`
 
 ```java
 @SpringBootTest
@@ -44,61 +49,57 @@ class GlobalExceptionHandlerTest {
 }
 ```
 
-| ???? | HTTP | ???? JSON |
-|------|------|-----------|
-| ?????? login ??? register | 400 | status, error, message, timestamp |
-| ???????? ?????? | 409 | status, message |
-| ???????? ?????? | 401 | status, message |
+| Сценарий | HTTP | Поля JSON |
+|----------|------|-----------|
+| Слабый пароль / невалидный register | 400 | status, error, message, timestamp |
+| Дубликат логина | 409 | status, error, message, timestamp |
+| Неверный пароль / login | 401 | status, error, message, timestamp |
+| Нет прав (teacher без ADMIN) | 403 | status, error, message, timestamp |
 
-?????????: `mvn test -Dtest=GlobalExceptionHandlerTest` ? **?????? ??????**.
+Команда Red: `mvn test -Dtest=GlobalExceptionHandlerTest` — **должен упасть**.
 
-### Green ? ??????????
+### Green — реализация
 
-**????:** `exception/AuthException.java`
-
-```java
-public class AuthException extends RuntimeException {
-    private final HttpStatus status;
-    // factories: unauthorized, conflict, forbidden, badRequest
-}
-```
-
-**????:** `exception/ErrorResponse.java`
+**Файл:** `exception/ErrorResponse.java`
 
 ```json
 {
   "status": 401,
   "error": "Unauthorized",
   "message": "Invalid credentials",
-  "timestamp": "2026-06-15T12:00:00"
+  "timestamp": "2026-06-15T12:00:00Z"
 }
 ```
 
-**????:** `exception/GlobalExceptionHandler.java`
+**Файл:** `exception/GlobalExceptionHandler.java`
 
-- `AuthException`
-- `MethodArgumentNotValidException` ? 400
-- `AccessDeniedException` ? 403
+| Исключение | HTTP |
+|------------|------|
+| `AuthException` | status из exception |
+| `MethodArgumentNotValidException` | 400 |
+| `AccessDeniedException` | 403 |
+| `ResponseStatusException` | соответствующий status |
 
-??????????? ????????: ???????? ad-hoc ?????????? ?? `AuthException`.
+**Refactor `AuthException`:** оставить factories (`conflict`, `unauthorized`, `badRequest`), обрабатывать в handler — не дублировать ad-hoc `ResponseEntity` в контроллере.
 
 ### Refactor
 
-- ?????? ????? `ErrorResponse.of(HttpStatus, String message)`
-- ?????????, ??? stack trace ?? ??????? ? ???? ??????
+- Статический метод `ErrorResponse.of(HttpStatus status, String message)`
+- Stack trace **не** отдаётся клиенту
+- Сообщения validation — первое поле или список (на выбор, зафиксировать в тестах)
 
-## ???????? ??????????
+## Критерии готовности
 
-- [ ] Red-????: ????? ???????? ?? handler
-- [ ] ??? ??????? ?????? v1 ? ?????????? HTTP + JSON
-- [ ] `GlobalExceptionHandlerTest` ???????
+- [ ] Red-тесты покрывают основные сценарии v1
+- [ ] Все ошибки auth API — единый JSON `ErrorResponse`
+- [ ] `GlobalExceptionHandlerTest` зелёный
 
-## ??????? ????????
+## Команды проверки
 
 ```bash
 .\mvnw.cmd test -Dtest=GlobalExceptionHandlerTest -pl services/auth
 ```
 
-## ????????? ??????
+## Связанные задачи
 
 - [14-integration-tests.md](./14-integration-tests.md)

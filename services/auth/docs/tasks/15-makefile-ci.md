@@ -53,7 +53,8 @@ management.endpoint.health.show-details=when_authorized
 | `spring-boot-starter-test` | 00 |
 | `spring-boot-starter-liquibase` | 00 |
 | `spring-boot-starter-validation` | 06 |
-| `jjwt-*` | 08 |
+| `jjwt-*` 0.13.0 | 08 |
+| `spring-boot-starter-data-jpa-test` | 07 |
 | `testcontainers-postgresql` | 14 |
 | `spring-boot-starter-actuator` | **15** |
 

@@ -15,7 +15,11 @@ E2E-сценарии auth через Spring-контекст и Testcontainers P
 ## Предусловия
 
 - [13-exception-handler.md](./13-exception-handler.md)
-- [12-controller-rest.md](./12-controller-rest.md)
+- [11-security-config.md](./11-security-config.md) — JWT filter + blacklist
+
+## Конфигурация в тестах
+
+`@DynamicPropertySource` — datasource Testcontainers + `app.security.jwt.secret`.
 
 ## Зависимости (`pom.xml`)
 
@@ -48,7 +52,7 @@ E2E-сценарии auth через Spring-контекст и Testcontainers P
 | Сценарий | Шаги | Ожидание |
 |----------|------|----------|
 | Полный цикл | register → login → refresh → logout | 201/200/204 |
-| Teacher by admin | login admin → register teacher → teacher login | 201/200 |
+| Teacher by admin | login admin (`Admin123!!!`) → register teacher → teacher login | 201/200 |
 | Blacklist | logout → старый access на защищённый endpoint | 401 |
 
 ### Green — довести реализацию

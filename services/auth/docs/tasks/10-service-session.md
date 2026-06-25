@@ -2,69 +2,106 @@
 
 ## Цель
 
-Аутентификация, обновление access-токена, отзыв сессии.
-
+Аутентификация, обновление access-токена, отзыв сессии и запись access JWT в blacklist.
 
 ## Методология TDD
 
 | Фаза | Действие |
 |------|----------|
-| **Red** | Написать падающий тест → `mvn test` должен упасть |
-| **Green** | Минимальная реализация → тесты зелёные |
-| **Refactor** | Улучшить код, тесты остаются зелёными |
+| **Red** | Кейсы сессии в `AuthServiceTest` — падают без реализации |
+| **Green** | `login`, `refresh`, `logout` в `AuthService` |
+| **Refactor** | Сборка `AuthResponseDto` через builder |
 
 ## Предусловия
 
-- [08-jwt-service.md](./08-jwt-service.md)
-- [09-service-register.md](./09-service-register.md)
+- [08-jwt-service.md](./08-jwt-service.md) — `JwtService` (JJWT)
+- [09-service-register.md](./09-service-register.md) — `AuthService`, `AuthException`
 
 ## Зависимости
 
-Без новых.
+Без новых Maven-зависимостей. Используются:
+
+- `JwtService`, `JwtProperties`
+- `RefreshTokenRepository`, `BlacklistedTokenRepository`
+- `PasswordEncoder`
+
+## Repository-тесты (опционально)
+
+| Файл | Кейсы |
+|------|-------|
+| `RefreshTokenRepositoryTest` | `findByTokenAndRevokedFalse` |
+| `BlacklistedTokenRepositoryTest` | `existsByJti` |
+
+`@DataJpaTest` + `@ActiveProfiles("test")`. Можно добавить параллельно или в [14](./14-integration-tests.md).
 
 ## Шаги (Red → Green → Refactor)
 
-### 1. `login(LoginDto dto)` → `AuthResponseDto`
+### Red — тесты в `AuthServiceTest`
+
+| Кейс | Ожидание |
+|------|----------|
+| login — успех | `AuthResponseDto` с access + refresh, `expiresIn = 900` |
+| login — пользователь не найден | 401 |
+| login — неверный пароль | 401 |
+| refresh — валидный token | новый access, тот же refresh |
+| refresh — сессия не найдена / revoked | 401 |
+| refresh — сессия истекла | 401 |
+| logout | refresh `revoked = true`, `BlacklistedToken` сохранён |
+
+### Green — методы `AuthService`
+
+#### `login(LoginDto dto)` → `AuthResponseDto`
 
 | Шаг | Действие |
 |-----|----------|
 | 1 | `findByLogin` → 401 если нет |
 | 2 | `passwordEncoder.matches` → 401 если неверно |
 | 3 | `jwtService.generateAccessToken(user)` |
-| 4 | Создать opaque `RefreshToken`, сохранить в БД |
-| 5 | Вернуть `AuthResponseDto` (`expires_in: 900`) |
+| 4 | Создать opaque `RefreshToken` (`revoked = false` по умолчанию), сохранить |
+| 5 | Вернуть `AuthResponseDto` с `expiresIn` из `JwtProperties` |
 
-### 2. `refresh(RefreshDto dto)` → `AuthResponseDto`
+#### `refresh(RefreshDto dto)` → `AuthResponseDto`
 
 | Шаг | Действие |
 |-----|----------|
-| 1 | Найти refresh по token, `revoked = false`, не expired |
+| 1 | `findByTokenAndRevokedFalse`, проверить `expiresAt` |
 | 2 | Новый access JWT |
-| 3 | (опционально) rotate refresh token |
-| 4 | Вернуть `AuthResponseDto` |
+| 3 | Вернуть `AuthResponseDto` (refresh без rotation) |
 
-### 3. `logout(String accessToken, String refreshToken)`
+#### `logout(String accessToken, String refreshToken)`
 
 | Шаг | Действие |
 |-----|----------|
-| 1 | `refreshToken.revoked = true` |
-| 2 | `jti` access → `BlacklistedToken` |
-| 3 | 204 No Content |
+| 1 | Найти refresh, установить `revoked = true` |
+| 2 | `jwtService.extractJti(accessToken)` → `BlacklistedToken` |
+| 3 | void (204 в контроллере) |
 
-### 4. Unit-тесты `AuthServiceSessionTest`
+### Blacklist при валидации access (отложено)
 
-- Успешный login → tokens
-- Неверный пароль → 401
-- Refresh с валидным token → новый access
-- Logout → refresh revoked, jti в blacklist
+Отклонение blacklisted access-токена — в [11](./11-security-config.md):
+
+```java
+// JwtAuthenticationFilter
+jwtService.isTokenValid(token)
+    && !blacklistedTokenRepository.existsByJti(jwtService.extractJti(token))
+```
 
 ## Критерии готовности
 
-- [ ] Login/refresh/logout по [spec.md](../spec.md)
-- [ ] `expires_in` = 900
-- [ ] Тесты зелёные
+- [x] Login / refresh / logout по [spec.md](../spec.md)
+- [x] `expires_in` = 900
+- [x] Logout пишет `jti` в `blacklisted_tokens`
+- [x] Кейсы сессии в `AuthServiceTest` зелёные
+- [x] Blacklist проверяется в JWT filter ([11](./11-security-config.md))
+
+## Команды проверки
+
+```bash
+.\mvnw.cmd test -Dtest=AuthServiceTest -pl services/auth
+```
 
 ## Связанные задачи
 
-- [12-controller-rest.md](./12-controller-rest.md)
 - [11-security-config.md](./11-security-config.md)
+- [12-controller-rest.md](./12-controller-rest.md)
+- [14-integration-tests.md](./14-integration-tests.md)

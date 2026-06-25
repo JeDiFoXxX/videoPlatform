@@ -2,16 +2,15 @@
 
 ## Цель
 
-Генерация и валидация JWT access-токенов: claims `sub` (user id), `login`, `role`, `jti`, `exp`.
-
+Генерация и валидация JWT access-токенов (JJWT): claims `sub`, `login`, `role`, `jti`, `exp`.
 
 ## Методология TDD
 
 | Фаза | Действие |
 |------|----------|
-| **Red** | Написать падающий тест → `mvn test` должен упасть |
-| **Green** | Минимальная реализация → тесты зелёные |
-| **Refactor** | Улучшить код, тесты остаются зелёными |
+| **Red** | `JwtServiceTest` — unit-тесты без Spring |
+| **Green** | `JwtService` + `JwtProperties` |
+| **Refactor** | Вынести TTL и secret в `application.properties` |
 
 ## Предусловия
 
@@ -20,33 +19,47 @@
 
 ## Зависимости (`pom.xml`)
 
-### Добавить (JJWT 0.12.x)
+### JJWT 0.13.x
 
 ```xml
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-api</artifactId>
-    <version>0.12.6</version>
+    <version>0.13.0</version>
 </dependency>
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-impl</artifactId>
-    <version>0.12.6</version>
+    <version>0.13.0</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-jackson</artifactId>
-    <version>0.12.6</version>
+    <version>0.13.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
 
 ### Конфигурация
 
+**Файл:** `config/JwtProperties.java`
+
+```java
+@ConfigurationProperties(prefix = "app.security.jwt")
+public class JwtProperties {
+    private String secret;
+    private Duration accessTokenLifetime;   // 900s
+    private Duration refreshTokenLifetime;  // 30d
+}
+```
+
+**Файл:** `application.properties`
+
 ```properties
-auth.jwt.secret=${JWT_SECRET:change-me-in-production}
-auth.jwt.access-ttl-seconds=900
+app.security.jwt.secret=${JWT_SECRET:my-super-secret-key-32-symbols-minimum-length}
+app.security.jwt.access-token-lifetime=900s
+app.security.jwt.refresh-token-lifetime=30d
 ```
 
 ## Шаги (Red → Green → Refactor)
@@ -57,10 +70,9 @@ auth.jwt.access-ttl-seconds=900
 
 | Метод | Назначение |
 |-------|------------|
-| `generateAccessToken(User user)` | JWT, TTL 900 сек |
-| `parseToken(String token)` | `Claims` или custom `JwtClaims` |
-| `extractJti(String token)` | для blacklist при logout |
-| `isTokenValid(String token)` | подпись + exp + не в blacklist |
+| `generateAccessToken(User user)` | JWT через `Jwts.builder()`, TTL из `JwtProperties` |
+| `extractJti(String token)` | claim `jti` (`.id(...)`) для blacklist |
+| `isTokenValid(String token)` | подпись + exp (blacklist — в [11](./11-security-config.md)) |
 
 Claims:
 
@@ -73,19 +85,31 @@ Claims:
 }
 ```
 
+> Проверка blacklist в `isTokenValid` — **не в этой задаче**; добавить в [11](./11-security-config.md) (`JwtAuthenticationFilter`).
+
 ### 2. Unit-тесты `JwtServiceTest`
 
 | Кейс | Ожидание |
 |------|----------|
-| generate + parse | `sub`, `role` совпадают |
-| expired token | `isTokenValid` → false |
-| wrong signature | exception |
+| `extractJti` на валидном токене | not null |
+| `extractJti` на повреждённом токене | null |
+| `isTokenValid` на свежем токене | true |
+| `isTokenValid` при TTL = 0 | false |
+
+Тесты **без** `@SpringBootTest` — `new JwtService(jwtProperties)`.
 
 ## Критерии готовности
 
-- [ ] TTL access = 900 сек
-- [ ] `role` читается без запроса к БД ([spec](../spec.md) п.5)
-- [ ] `JwtServiceTest` зелёный
+- [x] TTL access = 900 сек (`app.security.jwt.access-token-lifetime`)
+- [x] Claims `sub`, `login`, `role`, `jti`
+- [x] `role` читается из JWT без запроса к БД ([spec](../spec.md))
+- [x] `JwtServiceTest` зелёный
+
+## Команды проверки
+
+```bash
+.\mvnw.cmd test -Dtest=JwtServiceTest -pl services/auth
+```
 
 ## Связанные задачи
 

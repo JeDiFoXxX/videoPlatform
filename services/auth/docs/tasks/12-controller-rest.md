@@ -15,9 +15,19 @@ HTTP-эндпоинты из [spec.md](../spec.md) с `@Valid` DTO.
 
 ## Предусловия
 
-- [09-service-register.md](./09-service-register.md)
-- [10-service-session.md](./10-service-session.md)
-- [11-security-config.md](./11-security-config.md)
+- [09-service-register.md](./09-service-register.md) — `AuthService` (register)
+- [10-service-session.md](./10-service-session.md) — login / refresh / logout
+- [11-security-config.md](./11-security-config.md) — security + JWT filter
+
+## DTO (уже реализованы)
+
+| Класс | Пакет | Валидация |
+|-------|-------|-----------|
+| `RegisterDto` | `dto.request` | `@NotBlank`, `@ValidPassword`, login rules |
+| `TeacherRegisterDto` | `dto.request` | те же правила |
+| `LoginDto` | `dto.request` | без `@ValidPassword` |
+| `RefreshDto` | `dto.request` | — |
+| `AuthResponseDto` | `dto.response` | defaults `type`, `expires_in` |
 
 ## Зависимости
 
@@ -69,7 +79,7 @@ public class AuthController {
 |---|--------|----------|
 | 1 | POST `/register` валидный | 201 |
 | 2 | POST `/register` дубликат | 409 |
-| 3 | POST `/login` | 200 + tokens |
+| 3 | POST `/login` (admin / `Admin123!!!`) | 200 + tokens |
 | 4 | POST `/login` неверный пароль | 401 |
 | 5 | POST `/refresh` | 200 + новый access |
 | 6 | POST `/logout` | 204 |
