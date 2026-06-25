@@ -58,6 +58,14 @@ public class JwtService {
         }
     }
 
+    public String extractLogin(String token) {
+        return parseToken(token).get("login", String.class);
+    }
+
+    public String extractRole(String token) {
+        return parseToken(token).get("role", String.class);
+    }
+
     private Claims parseToken(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
