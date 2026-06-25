@@ -1,6 +1,5 @@
 package ru.videoplatform.auth.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,38 +54,13 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    private RegisterDto studentDto;
-    private TeacherRegisterDto teacherDto;
-    private LoginDto loginDto;
-    private RefreshDto refreshDto;
-    private User user;
-    private RefreshToken refreshToken;
-
-    @BeforeEach
-    void setUp() {
-        studentDto = new RegisterDto("student123", "valid_password");
-        teacherDto = new TeacherRegisterDto("teacher123", "valid_password");
-        loginDto = new LoginDto("user123", "user_password");
-        refreshDto = new RefreshDto("hashed_refresh_token");
-        user = User.builder()
-                .login("student123")
-                .passwordHash("hashed_student_password")
-                .role(UserRole.STUDENT)
-                .build();
-        refreshToken = RefreshToken.builder()
-                .token(UUID.randomUUID().toString())
-                .expiresAt(Instant.now().plus(30, ChronoUnit.DAYS))
-                .user(user)
-                .build();
-    }
-
     @Test
     @DisplayName("Успешная регистрация STUDENT")
     void shouldRegisterStudentSuccessfully() {
         doReturn(false).when(userRepository).existsByLogin(anyString());
         doReturn("hashed_student_password").when(passwordEncoder).encode(anyString());
-        doReturn(user).when(userRepository).save(any());
-        var result = authService.registerStudent(studentDto);
+        doReturn(createUser(UserRole.STUDENT)).when(userRepository).save(any());
+        var result = authService.registerStudent(createStudentDto());
         verify(userRepository).existsByLogin(anyString());
         verify(passwordEncoder).encode(anyString());
         verify(userRepository).save(any());
@@ -98,6 +72,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Ошибка при регистрации STUDENT с дублирующимся логином")
     void shouldThrowConflictWhenStudentLoginExists() {
+        var studentDto = createStudentDto();
         doReturn(true).when(userRepository).existsByLogin(anyString());
         assertThatThrownBy(() -> authService.registerStudent(studentDto))
                 .isInstanceOf(ResponseStatusException.class)
@@ -110,13 +85,8 @@ class AuthServiceTest {
     void shouldRegisterTeacherSuccessfully() {
         doReturn(false).when(userRepository).existsByLogin(anyString());
         doReturn("hashed_teacher_password").when(passwordEncoder).encode(anyString());
-        var savedTeacher = User.builder()
-                .login(teacherDto.getLogin())
-                .passwordHash("hashed_teacher_password")
-                .role(UserRole.TEACHER)
-                .build();
-        doReturn(savedTeacher).when(userRepository).save(any());
-        var result = authService.registerTeacher(teacherDto);
+        doReturn(createUser(UserRole.TEACHER)).when(userRepository).save(any());
+        var result = authService.registerTeacher(createTeacherDto());
         verify(userRepository).existsByLogin(anyString());
         verify(passwordEncoder).encode(anyString());
         verify(userRepository).save(any());
@@ -128,6 +98,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Ошибка при регистрации TEACHER с дублирующимся логином")
     void shouldThrowConflictWhenTeacherLoginExists() {
+        var teacherDto = createTeacherDto();
         doReturn(true).when(userRepository).existsByLogin(anyString());
         assertThatThrownBy(() -> authService.registerTeacher(teacherDto))
                 .isInstanceOf(ResponseStatusException.class)
@@ -138,11 +109,12 @@ class AuthServiceTest {
     @Test
     @DisplayName("Успешная авторизация пользователя с генерацией JWT и Refresh токенов")
     void shouldLoginSuccessfully() {
-        doReturn(Optional.of(user)).when(userRepository).findByLogin(anyString());
+        var refreshToken = createValidRefreshToken();
+        doReturn(Optional.of(createUser(UserRole.STUDENT))).when(userRepository).findByLogin(anyString());
         doReturn(true).when(passwordEncoder).matches(anyString(), anyString());
         doReturn("hashed_access_token").when(jwtService).generateAccessToken(any());
         doReturn(refreshToken).when(refreshTokenRepository).save(any());
-        var result = authService.login(loginDto);
+        var result = authService.login(createLoginDto());
         verify(userRepository).findByLogin(anyString());
         verify(passwordEncoder).matches(anyString(), anyString());
         verify(jwtService).generateAccessToken(any());
@@ -155,10 +127,11 @@ class AuthServiceTest {
     @Test
     @DisplayName("Успешное обновление пары токенов по валидному Refresh токену")
     void shouldRefreshTokensSuccessfully() {
+        var refreshToken = createValidRefreshToken();
         doReturn(Optional.of(refreshToken)).when(refreshTokenRepository)
                 .findByTokenAndRevokedFalse(anyString());
         doReturn("hashed_access_token").when(jwtService).generateAccessToken(any());
-        var result = authService.refresh(refreshDto);
+        var result = authService.refresh(createRefreshDto());
         verify(refreshTokenRepository).findByTokenAndRevokedFalse(anyString());
         verify(jwtService).generateAccessToken(any());
         assertThat(result.getAccessToken()).isEqualTo("hashed_access_token");
@@ -169,6 +142,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Успешный логаут пользователя с отзывом сессии и баном токена")
     void shouldLogoutSuccessfully() {
+        var refreshToken = createValidRefreshToken();
         doReturn(Optional.of(refreshToken)).when(refreshTokenRepository)
                 .findByTokenAndRevokedFalse(anyString());
         doReturn("mocked-jti-uuid").when(jwtService).extractJti(anyString());
@@ -183,7 +157,7 @@ class AuthServiceTest {
     @DisplayName("Выброс исключения, если пользователь с таким логином не найден")
     void loginShouldThrowExceptionWhenUserDoesNotExist() {
         doReturn(Optional.empty()).when(userRepository).findByLogin(anyString());
-        assertThatThrownBy(() -> authService.login(loginDto))
+        assertThatThrownBy(() -> authService.login(createLoginDto()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Пользователь с таким логином не найден");
         verify(userRepository).findByLogin(anyString());
@@ -192,9 +166,9 @@ class AuthServiceTest {
     @Test
     @DisplayName("Выброс исключения, если введен неверный пароль")
     void loginShouldThrowExceptionWhenPasswordIsIncorrect() {
-        doReturn(Optional.of(user)).when(userRepository).findByLogin(anyString());
+        doReturn(Optional.of(createUser(UserRole.STUDENT))).when(userRepository).findByLogin(anyString());
         doReturn(false).when(passwordEncoder).matches(anyString(), anyString());
-        assertThatThrownBy(() -> authService.login(loginDto))
+        assertThatThrownBy(() -> authService.login(createLoginDto()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Введен неверный пароль");
         verify(userRepository).findByLogin(anyString());
@@ -206,7 +180,7 @@ class AuthServiceTest {
     void refreshShouldThrowExceptionWhenSessionNotFoundOrRevoked() {
         doReturn(Optional.empty()).when(refreshTokenRepository)
                 .findByTokenAndRevokedFalse(anyString());
-        assertThatThrownBy(() -> authService.refresh(refreshDto))
+        assertThatThrownBy(() -> authService.refresh(createRefreshDto()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Сессия не найдена или была отозвана");
         verify(refreshTokenRepository).findByTokenAndRevokedFalse(anyString());
@@ -215,14 +189,51 @@ class AuthServiceTest {
     @Test
     @DisplayName("Выброс исключения, если срок действия сессии истек")
     void refreshShouldThrowExceptionWhenSessionHasExpired() {
-        refreshToken = RefreshToken.builder()
-                .expiresAt(Instant.now().minus(1, ChronoUnit.DAYS))
-                .build();
-        doReturn(Optional.of(refreshToken)).when(refreshTokenRepository)
+        doReturn(Optional.of(createInValidRefreshToken())).when(refreshTokenRepository)
                 .findByTokenAndRevokedFalse(anyString());
-        assertThatThrownBy(() -> authService.refresh(refreshDto))
+        assertThatThrownBy(() -> authService.refresh(createRefreshDto()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Сессия истекла");
         verify(refreshTokenRepository).findByTokenAndRevokedFalse(anyString());
+    }
+
+    private RegisterDto createStudentDto() {
+        return new RegisterDto("student123", "valid_password");
+    }
+
+    private TeacherRegisterDto createTeacherDto() {
+        return new TeacherRegisterDto("teacher123", "valid_password");
+    }
+
+    private LoginDto createLoginDto() {
+        return new LoginDto("user123", "user_password");
+    }
+
+    private RefreshDto createRefreshDto() {
+        return new RefreshDto("hashed_refresh_token");
+    }
+
+    private User createUser(UserRole role) {
+        return User.builder()
+                .login("user_" + role.name().toLowerCase())
+                .passwordHash("hashed_" + role.name().toLowerCase() +"_password")
+                .role(role)
+                .build();
+    }
+
+    private RefreshToken createValidRefreshToken() {
+        return RefreshToken.builder()
+                .token(UUID.randomUUID().toString())
+                .expiresAt(Instant.now().plus(30, ChronoUnit.DAYS))
+                .user(createUser(UserRole.STUDENT))
+                .build();
+    }
+
+    private RefreshToken createInValidRefreshToken() {
+        return RefreshToken.builder()
+                .token(UUID.randomUUID().toString())
+                .expiresAt(Instant.now().minus(30, ChronoUnit.DAYS))
+                .user(createUser(UserRole.STUDENT))
+                .build();
     }
 }
