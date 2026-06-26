@@ -109,7 +109,7 @@ public class AuthService {
 
     private void validateLoginUniqueness(String login) {
         if (userRepository.existsByLogin(login)) {
-            throw AuthException.conflict("Логин '" + login + "' уже занят");
+            throw AuthException.conflict("Логин " + login + " уже занят");
         }
     }
 }

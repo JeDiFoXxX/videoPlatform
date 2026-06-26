@@ -8,11 +8,11 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
     public boolean isValid(String password, ConstraintValidatorContext context) {
         boolean result = true;
 
-        if (password == null || password.trim().isEmpty()) {
-            result = false;
+        if (password == null || password.isEmpty()) {
+            return result;
         }
 
-        if (result && (password.length() < 10 || password.length() > 20)) {
+        if (password.length() < 10 || password.length() > 20) {
             result = false;
         }
 

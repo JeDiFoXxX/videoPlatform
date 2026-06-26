@@ -10,6 +10,7 @@ import ru.videoplatform.auth.dto.request.RefreshDto;
 import ru.videoplatform.auth.dto.request.RegisterDto;
 import ru.videoplatform.auth.dto.request.TeacherRegisterDto;
 import ru.videoplatform.auth.dto.response.AuthResponseDto;
+import ru.videoplatform.auth.exception.AuthException;
 import ru.videoplatform.auth.service.AuthService;
 
 @RestController
@@ -48,7 +49,7 @@ public class AuthController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody RefreshDto dto) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Отсутствует или неверно указан заголовок Authorization");
+            throw AuthException.badRequest("Отсутствует или неверно указан заголовок Authorization");
         }
         var accessToken = authorization.substring(7);
         authService.logout(accessToken, dto.getRefreshToken());

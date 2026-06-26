@@ -76,7 +76,7 @@ class AuthServiceTest {
         doReturn(true).when(userRepository).existsByLogin(anyString());
         assertThatThrownBy(() -> authService.registerStudent(studentDto))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Логин '" + studentDto.getLogin() + "' уже занят");
+                .hasMessageContaining("Логин " + studentDto.getLogin() + " уже занят");
         verify(userRepository, never()).save(any());
     }
 
@@ -102,7 +102,7 @@ class AuthServiceTest {
         doReturn(true).when(userRepository).existsByLogin(anyString());
         assertThatThrownBy(() -> authService.registerTeacher(teacherDto))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Логин '" + teacherDto.getLogin() + "' уже занят");
+                .hasMessageContaining("Логин " + teacherDto.getLogin() + " уже занят");
         verify(userRepository, never()).save(any());
     }
 
@@ -189,7 +189,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Выброс исключения, если срок действия сессии истек")
     void refreshShouldThrowExceptionWhenSessionHasExpired() {
-        doReturn(Optional.of(createInValidRefreshToken())).when(refreshTokenRepository)
+        doReturn(Optional.of(createInvalidRefreshToken())).when(refreshTokenRepository)
                 .findByTokenAndRevokedFalse(anyString());
         assertThatThrownBy(() -> authService.refresh(createRefreshDto()))
                 .isInstanceOf(ResponseStatusException.class)
@@ -229,7 +229,7 @@ class AuthServiceTest {
                 .build();
     }
 
-    private RefreshToken createInValidRefreshToken() {
+    private RefreshToken createInvalidRefreshToken() {
         return RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .expiresAt(Instant.now().minus(30, ChronoUnit.DAYS))
