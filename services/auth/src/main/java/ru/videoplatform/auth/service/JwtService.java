@@ -41,20 +41,20 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractJti(String token) {
-        try {
-            return parseToken(token).getId();
-        } catch (JwtException e) {
-            return null;
-        }
-    }
-
     public boolean isTokenValid(String token) {
         try {
             parseToken(token);
             return true;
         } catch (JwtException e) {
             return false;
+        }
+    }
+
+    public String extractJti(String token) {
+        try {
+            return parseToken(token).getId();
+        } catch (JwtException e) {
+            return null;
         }
     }
 

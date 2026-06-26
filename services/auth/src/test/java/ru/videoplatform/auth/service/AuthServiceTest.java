@@ -198,15 +198,15 @@ class AuthServiceTest {
     }
 
     private RegisterDto createStudentDto() {
-        return new RegisterDto("student123", "valid_password");
+        return new RegisterDto("student", "validPassword123!@@rd");
     }
 
     private TeacherRegisterDto createTeacherDto() {
-        return new TeacherRegisterDto("teacher123", "valid_password");
+        return new TeacherRegisterDto("teacher", "validPassword123!@@rd");
     }
 
     private LoginDto createLoginDto() {
-        return new LoginDto("user123", "user_password");
+        return new LoginDto("user", "validPassword123!@@");
     }
 
     private RefreshDto createRefreshDto() {
@@ -215,7 +215,7 @@ class AuthServiceTest {
 
     private User createUser(UserRole role) {
         return User.builder()
-                .login("user_" + role.name().toLowerCase())
+                .login(role.name().toLowerCase())
                 .passwordHash("hashed_" + role.name().toLowerCase() +"_password")
                 .role(role)
                 .build();

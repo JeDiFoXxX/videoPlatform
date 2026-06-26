@@ -5,16 +5,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.videoplatform.auth.dto.request.RegisterDto;
+import ru.videoplatform.auth.dto.request.TeacherRegisterDto;
 import ru.videoplatform.auth.model.BlacklistedToken;
 import ru.videoplatform.auth.model.User;
 import ru.videoplatform.auth.model.UserRole;
 import ru.videoplatform.auth.repository.BlacklistedTokenRepository;
 import ru.videoplatform.auth.service.JwtService;
-import ru.videoplatform.auth.support.SecurityTestController;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -26,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(SecurityTestController.class)
 class SecurityConfigTest {
 
     @Autowired
@@ -36,25 +36,28 @@ class SecurityConfigTest {
     private JwtService jwtService;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private BlacklistedTokenRepository blacklistedTokenRepository;
 
     @Test
-    @DisplayName("POST /register без токена — 201 (permitAll)")
+    @DisplayName("POST /register без токена — 201")
     void registerWithoutTokenShouldReturnCreated() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content(objectMapper.writeValueAsString(createStudentDto())))
                 .andExpect(status().isCreated());
     }
 
     @Test
     @DisplayName("POST /register/teacher с ADMIN JWT — 201")
     void registerTeacherWithAdminTokenShouldReturnCreated() throws Exception {
-        var token = jwtService.generateAccessToken(adminUser());
+        var token = jwtService.generateAccessToken(createAdminUser());
         mockMvc.perform(post("/api/v1/auth/register/teacher")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content(objectMapper.writeValueAsString(createTeacherDto())))
                 .andExpect(status().isCreated());
     }
 
@@ -70,7 +73,7 @@ class SecurityConfigTest {
     @Test
     @DisplayName("POST /logout с blacklisted access — 401")
     void blacklistedTokenShouldReturnUnauthorized() throws Exception {
-        var token = jwtService.generateAccessToken(adminUser());
+        var token = jwtService.generateAccessToken(createAdminUser());
         var jti = jwtService.extractJti(token);
         blacklistedTokenRepository.save(BlacklistedToken.builder()
                 .jti(jti)
@@ -83,11 +86,19 @@ class SecurityConfigTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private User adminUser() {
+    private User createAdminUser() {
         return User.builder()
                 .id(UUID.randomUUID())
                 .login("admin")
                 .role(UserRole.ADMIN)
                 .build();
+    }
+
+    private RegisterDto createStudentDto() {
+        return new RegisterDto("student", "validPassword123!@@");
+    }
+
+    private TeacherRegisterDto createTeacherDto() {
+        return new TeacherRegisterDto("teacher", "validPassword123!@@");
     }
 }
