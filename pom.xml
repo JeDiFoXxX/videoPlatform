@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.6</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>ru</groupId>
+    <artifactId>videoPlatform</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>services/api-gateway</module>
+        <module>services/booking-service</module>
+        <module>services/signaling-service</module>
+        <module>services/notification-service</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <failOnViolation>true</failOnViolation>
+                    <violationSeverity>warning</violationSeverity>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <sourceDirectories>
+                        <sourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/api-gateway/src/main/java
+                        </sourceDirectory>
+                        <sourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/booking-service/src/main/java
+                        </sourceDirectory>
+                        <sourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/signaling-service/src/main/java
+                        </sourceDirectory>
+                        <sourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/notification-service/src/main/java
+                        </sourceDirectory>
+                    </sourceDirectories>
+                    <testSourceDirectories>
+                        <testSourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/api-gateway/src/test/java
+                        </testSourceDirectory>
+                        <testSourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/booking-service/src/test/java
+                        </testSourceDirectory>
+                        <testSourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/signaling-service/src/test/java
+                        </testSourceDirectory>
+                        <testSourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/notification-service/src/test/java
+                        </testSourceDirectory>
+                    </testSourceDirectories>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
