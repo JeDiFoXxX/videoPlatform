@@ -13,6 +13,7 @@ import ru.videoplatform.booking.model.LessonStatus;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,7 +40,7 @@ class LessonRepositoryTest {
     @DisplayName("Должен обнаружить пересечение, если новый урок накладывается на существующий")
     void shouldDetectOverlapWhenLessonsIntersects() {
         var existingLesson = Lesson.builder()
-                .studentId("student-1")
+                .studentId("student_1")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(90, ChronoUnit.MINUTES))
                 .status(LessonStatus.SCHEDULED)
@@ -48,7 +49,9 @@ class LessonRepositoryTest {
         entityManager.persistAndFlush(existingLesson);
         Instant newStart = baseTime.plus(30, ChronoUnit.MINUTES);
         Instant newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
-        var result = lessonRepository.existsByStartTimeBeforeAndEndTimeAfter(newEnd, newStart);
+        var result = lessonRepository.existsByStatusInAndStartTimeBeforeAndEndTimeAfter(
+                List.of(LessonStatus.SCHEDULED), newEnd, newStart
+        );
         assertTrue(result);
     }
 
@@ -56,7 +59,7 @@ class LessonRepositoryTest {
     @DisplayName("Не должен находить пересечение, если уроки идут строго подряд (минута в минуту)")
     void shouldNotDetectOverlapWhenLessonsAreBackToBack() {
         var existingLesson = Lesson.builder()
-                .studentId("student-1")
+                .studentId("student_1")
                 .startTime(baseTime.minus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime)
                 .status(LessonStatus.SCHEDULED)
@@ -65,7 +68,9 @@ class LessonRepositoryTest {
         entityManager.persistAndFlush(existingLesson);
         Instant newStart = baseTime;
         Instant newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
-        var result = lessonRepository.existsByStartTimeBeforeAndEndTimeAfter(newEnd, newStart);
+        var result = lessonRepository.existsByStatusInAndStartTimeBeforeAndEndTimeAfter(
+                List.of(LessonStatus.SCHEDULED), newEnd, newStart
+        );
         assertFalse(result);
     }
 }
