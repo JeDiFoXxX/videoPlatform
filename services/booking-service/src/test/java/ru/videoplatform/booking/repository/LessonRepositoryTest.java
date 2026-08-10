@@ -109,4 +109,40 @@ class LessonRepositoryTest {
         assertNotNull(rootCause);
         assertTrue(rootCause.getMessage().contains("unique_index_start_time"));
     }
+
+    @Test
+    @DisplayName("Должен успешно найти урок по статусу, ID и ID студента")
+    void shouldFindLessonByStatusAndIdAndStudentId() {
+        var existingLesson = Lesson.builder()
+                .studentId("student_1")
+                .startTime(baseTime)
+                .endTime(baseTime.plus(90, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        var savedLesson = entityManager.persistAndFlush(existingLesson);
+        var result = lessonRepository.findByStatusAndIdAndStudentId(
+                LessonStatus.SCHEDULED,
+                savedLesson.getId(),
+                savedLesson.getStudentId()
+        );
+        assertTrue(result.isPresent());
+        assertEquals(savedLesson.getId(), result.get().getId());
+    }
+
+    @Test
+    @DisplayName("Должен вернуть true, если у студента есть активный урок")
+    void shouldReturnTrueWhenActiveLessonExistsForStudent() {
+        var existingLesson = Lesson.builder()
+                .studentId("student_1")
+                .startTime(baseTime)
+                .endTime(baseTime.plus(90, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        entityManager.persistAndFlush(existingLesson);
+        var result = lessonRepository.existsByStatusInAndStudentId(
+                List.of(LessonStatus.SCHEDULED),
+                "student_1"
+        );
+        assertTrue(result);
+    }
 }
