@@ -6,4 +6,5 @@
 		http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <include file="classpath:db/changelog/scripts/001_ddl_create_lessons_table.sql"/>
+    <include file="classpath:db/changelog/scripts/002_ddl_unique_index_start_time.sql"/>
 </databaseChangeLog>
