@@ -70,7 +70,8 @@ class LessonServiceTest {
     }
 
     @Test
-    @DisplayName("Должен выбросить SlotConflictException, если existsBy... вернул true")
+    @DisplayName("Должен выбросить SlotConflictException, "
+            + "если existsByStatusInAndEndTimeAfterAndStartTimeBefore вернул true")
     void shouldThrowSlotConflictExceptionWhenSlotIsOccupied() {
         given(lessonRepository.existsByStatusInAndEndTimeAfterAndStartTimeBefore(any(), any(), any()))
                 .willReturn(true);
@@ -80,6 +81,21 @@ class LessonServiceTest {
         assertEquals("Слот уже занят", exception.getMessage());
         verify(lessonRepository, times(1))
                 .existsByStatusInAndEndTimeAfterAndStartTimeBefore(any(), any(), any());
-        verify(lessonRepository, never()).save(any(Lesson.class));
+        verify(lessonRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Должен выбросить SlotConflictException, если existsByStatusInAndStudentId вернул true")
+    void shouldThrowSlotConflictExceptionWhenStudentAlreadyHasActiveLesson() {
+        given(lessonRepository.existsByStatusInAndStudentId(any(), any()))
+                .willReturn(true);
+        var exception = assertThrows(SlotConflictException.class, () ->
+                lessonService.createLesson(validDto)
+        );
+        assertEquals("Сначала отмените текущий урок", exception.getMessage());
+        verify(lessonRepository, times(1))
+                .existsByStatusInAndStudentId(any(), any());
+        verify(lessonRepository, never()).existsByStatusInAndEndTimeAfterAndStartTimeBefore(any(), any(), any());
+        verify(lessonRepository, never()).save(any());
     }
 }

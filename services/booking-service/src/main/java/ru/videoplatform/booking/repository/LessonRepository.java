@@ -20,4 +20,6 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     boolean existsByStatusInAndEndTimeAfterAndStartTimeBefore(
             Collection<LessonStatus> statuses, Instant startTime, Instant endTime
     );
+
+    boolean existsByStatusInAndStudentId(Collection<LessonStatus> statuses, String studentId);
 }

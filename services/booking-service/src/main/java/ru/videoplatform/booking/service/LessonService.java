@@ -20,6 +20,13 @@ public class LessonService {
 
     @Transactional
     public LessonResponseDto createLesson(LessonCreateDto dto) {
+        boolean hasActiveLesson = lessonRepository.existsByStatusInAndStudentId(
+                List.of(LessonStatus.SCHEDULED), dto.studentId()
+        );
+
+        if (hasActiveLesson) {
+            throw new SlotConflictException("Сначала отмените текущий урок");
+        }
         boolean isOccupied = lessonRepository.existsByStatusInAndEndTimeAfterAndStartTimeBefore(
                 List.of(LessonStatus.SCHEDULED), dto.startTime(), dto.endTime()
         );
