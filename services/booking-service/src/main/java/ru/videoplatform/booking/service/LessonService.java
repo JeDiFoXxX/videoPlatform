@@ -11,6 +11,7 @@ import ru.videoplatform.booking.model.LessonStatus;
 import ru.videoplatform.booking.repository.LessonRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -36,5 +37,15 @@ public class LessonService {
         }
 
         return LessonResponseDto.from(lessonRepository.save(dto.toEntity()));
+    }
+
+    @Transactional
+    public LessonResponseDto cancelLesson(UUID id, String studentId) {
+        var activeLesson = lessonRepository.findByStatusAndIdAndStudentId(LessonStatus.SCHEDULED, id, studentId)
+                .orElseThrow(() -> new SlotConflictException("Не удалось отменить урок"));
+        var canceledLesson = activeLesson.toBuilder()
+                .status(LessonStatus.CANCELED)
+                .build();
+        return LessonResponseDto.from(lessonRepository.save(canceledLesson));
     }
 }

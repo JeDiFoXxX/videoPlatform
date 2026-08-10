@@ -15,6 +15,7 @@ import ru.videoplatform.booking.repository.LessonRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -96,6 +97,45 @@ class LessonServiceTest {
         verify(lessonRepository, times(1))
                 .existsByStatusInAndStudentId(any(), any());
         verify(lessonRepository, never()).existsByStatusInAndEndTimeAfterAndStartTimeBefore(any(), any(), any());
+        verify(lessonRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Успешная отмена урока (перевод в статус CANCELED)")
+    void shouldCancelLessonSuccessfully() {
+        var lessonId = UUID.randomUUID();
+        var studentId = "student_1";
+        var activeLesson = Lesson.builder()
+                .id(lessonId)
+                .studentId(studentId)
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        var savedLesson = activeLesson.toBuilder()
+                .status(LessonStatus.CANCELED)
+                .build();
+        given(lessonRepository.findByStatusAndIdAndStudentId(LessonStatus.SCHEDULED, lessonId, studentId))
+                .willReturn(Optional.of(activeLesson));
+        given(lessonRepository.save(any())).willReturn(savedLesson);
+        assertNotNull(lessonService.cancelLesson(lessonId, studentId));
+        verify(lessonRepository, times(1))
+                .findByStatusAndIdAndStudentId(LessonStatus.SCHEDULED, lessonId, studentId);
+        verify(lessonRepository, times(1))
+                .save(argThat(lesson -> lesson.getStatus() == LessonStatus.CANCELED));
+    }
+
+    @Test
+    @DisplayName("Должен выбросить SlotConflictException, если урок не найден или недоступен для отмены")
+    void shouldThrowSlotConflictExceptionWhenLessonNotFoundOrUnavailable() {
+        var lessonId = UUID.randomUUID();
+        var studentId = "student_1";
+        given(lessonRepository.findByStatusAndIdAndStudentId(any(), any(), any()))
+                .willReturn(Optional.empty());
+        var exception = assertThrows(SlotConflictException.class, () ->
+                lessonService.cancelLesson(lessonId, studentId)
+        );
+        assertEquals("Не удалось отменить урок", exception.getMessage());
+        verify(lessonRepository, times(1))
+                .findByStatusAndIdAndStudentId(any(), any(), any());
         verify(lessonRepository, never()).save(any());
     }
 }
