@@ -145,4 +145,29 @@ class LessonRepositoryTest {
         );
         assertTrue(result);
     }
+
+    @Test
+    @DisplayName("Должен находить только SCHEDULED уроки в интервале времени с сортировкой по возрастанию")
+    void shouldFindScheduledLessonsWithinDayRangeOrderedByStartTimeAsc() {
+        var firstExistingLesson = Lesson.builder()
+                .studentId("student_1")
+                .startTime(baseTime)
+                .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        var secondExistingLesson = Lesson.builder()
+                .studentId("student_2")
+                .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        entityManager.persistAndFlush(firstExistingLesson);
+        entityManager.persistAndFlush(secondExistingLesson);
+        var result = lessonRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(
+                List.of(LessonStatus.SCHEDULED),
+                baseTime.truncatedTo(ChronoUnit.DAYS),
+                baseTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS)
+        );
+        assertEquals(List.of(firstExistingLesson, secondExistingLesson), result);
+    }
 }
