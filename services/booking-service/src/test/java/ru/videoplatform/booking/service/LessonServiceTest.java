@@ -15,6 +15,7 @@ import ru.videoplatform.booking.repository.LessonRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -137,5 +138,36 @@ class LessonServiceTest {
         verify(lessonRepository, times(1))
                 .findByStatusAndIdAndStudentId(any(), any(), any());
         verify(lessonRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Должен успешно сгруппировать уроки по дням в интервале")
+    void shouldReturnGroupedLessonsMapForGivenInterval() {
+        var from = baseTime.truncatedTo(ChronoUnit.DAYS);
+        var to = from.plus(5, ChronoUnit.DAYS);
+        var secondKey = from.plus(1, ChronoUnit.DAYS);
+        var firstExistingLesson = Lesson.builder()
+                .id(UUID.randomUUID())
+                .studentId("student_1")
+                .startTime(from.plus(10, ChronoUnit.HOURS))
+                .endTime(from.plus(11, ChronoUnit.HOURS))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        var secondExistingLesson = Lesson.builder()
+                .id(UUID.randomUUID())
+                .studentId("student_2")
+                .startTime(from.plus(1, ChronoUnit.DAYS).plus(5, ChronoUnit.HOURS))
+                .endTime(from.plus(1, ChronoUnit.DAYS).plus(6, ChronoUnit.HOURS))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        given(lessonRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any()))
+                .willReturn(List.of(firstExistingLesson, secondExistingLesson));
+        var result = lessonService.getLessonsCalendarInInterval(from, to);
+        assertEquals(1, result.get(from).size());
+        assertEquals("student_1", result.get(from).getFirst().studentId());
+        assertEquals(1, result.get(secondKey).size());
+        assertEquals("student_2", result.get(secondKey).getFirst().studentId());
+        verify(lessonRepository, times(1))
+                .findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any());
     }
 }

@@ -10,8 +10,12 @@ import ru.videoplatform.booking.exception.SlotConflictException;
 import ru.videoplatform.booking.model.LessonStatus;
 import ru.videoplatform.booking.repository.LessonRepository;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,5 +51,16 @@ public class LessonService {
                 .status(LessonStatus.CANCELED)
                 .build();
         return LessonResponseDto.from(lessonRepository.save(canceledLesson));
+    }
+
+    public Map<Instant, List<LessonResponseDto>> getLessonsCalendarInInterval(Instant from, Instant to) {
+        var lessons = lessonRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(
+                List.of(LessonStatus.SCHEDULED), from, to
+        );
+        return lessons.stream()
+                .collect(Collectors.groupingBy(
+                        lesson -> lesson.getStartTime().truncatedTo(ChronoUnit.DAYS),
+                        Collectors.mapping(LessonResponseDto::from, Collectors.toList())
+                ));
     }
 }
