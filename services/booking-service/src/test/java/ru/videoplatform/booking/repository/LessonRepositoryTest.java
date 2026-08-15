@@ -147,7 +147,7 @@ class LessonRepositoryTest {
     }
 
     @Test
-    @DisplayName("Должен находить только SCHEDULED уроки в интервале времени с сортировкой по возрастанию")
+    @DisplayName("Должен находить запланированные уроки в интервале времени с сортировкой по возрастанию")
     void shouldFindScheduledLessonsWithinDayRangeOrderedByStartTimeAsc() {
         var firstExistingLesson = Lesson.builder()
                 .studentId("student_1")
@@ -169,5 +169,32 @@ class LessonRepositoryTest {
                 baseTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS)
         );
         assertEquals(List.of(firstExistingLesson, secondExistingLesson), result);
+    }
+
+    @Test
+    @DisplayName("Должен находить запланированные уроки студента в диапазоне времени")
+    void shouldFindStudentLessonsInTimeRange() {
+        var firstExistingLesson = Lesson.builder()
+                .studentId("student_1")
+                .startTime(baseTime)
+                .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        var secondExistingLesson = Lesson.builder()
+                .studentId("student_2")
+                .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        List.of(firstExistingLesson, secondExistingLesson)
+                .forEach(entityManager::persist);
+        entityManager.flush();
+        var result = lessonRepository.findByStatusInAndStudentIdAndStartTimeBetweenOrderByStartTimeAsc(
+                List.of(LessonStatus.SCHEDULED),
+                "student_1",
+                baseTime.truncatedTo(ChronoUnit.DAYS),
+                baseTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS)
+        );
+        assertEquals(List.of(firstExistingLesson), result);
     }
 }

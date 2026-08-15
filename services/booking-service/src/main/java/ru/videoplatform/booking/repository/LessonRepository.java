@@ -18,6 +18,10 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
             Collection<LessonStatus> statuses, Instant from, Instant to
     );
 
+    List<Lesson> findByStatusInAndStudentIdAndStartTimeBetweenOrderByStartTimeAsc(
+            Collection<LessonStatus> statuses, String studentId, Instant from, Instant to
+    );
+
     Optional<Lesson> findByStatusAndIdAndStudentId(LessonStatus status, UUID id, String studentId);
 
     boolean existsByStatusInAndEndTimeAfterAndStartTimeBefore(
