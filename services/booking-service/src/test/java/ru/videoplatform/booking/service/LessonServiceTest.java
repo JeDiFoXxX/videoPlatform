@@ -162,12 +162,33 @@ class LessonServiceTest {
                 .build();
         given(lessonRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any()))
                 .willReturn(List.of(firstExistingLesson, secondExistingLesson));
-        var result = lessonService.getLessonsCalendarInInterval(from, to);
+        var result = lessonService.getLessonsTeacher(from, to);
         assertEquals(1, result.get(from).size());
         assertEquals("student_1", result.get(from).getFirst().studentId());
         assertEquals(1, result.get(secondKey).size());
         assertEquals("student_2", result.get(secondKey).getFirst().studentId());
         verify(lessonRepository, times(1))
                 .findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Должен успешно сгруппировать уроки по дням в интервале для одного студента")
+    void shouldGroupStudentLessonsByDaysForPeriod() {
+        var from = baseTime.truncatedTo(ChronoUnit.DAYS);
+        var to = from.plus(5, ChronoUnit.DAYS);
+        var existingLesson = Lesson.builder()
+                .id(UUID.randomUUID())
+                .studentId("student_1")
+                .startTime(from.plus(10, ChronoUnit.HOURS))
+                .endTime(from.plus(11, ChronoUnit.HOURS))
+                .status(LessonStatus.SCHEDULED)
+                .build();
+        given(lessonRepository.findByStatusInAndStudentIdAndStartTimeBetweenOrderByStartTimeAsc(
+                any(), any(), any(), any())).willReturn(List.of(existingLesson));
+        var result = lessonService.getLessonsStudent("student_1", from, to);
+        assertEquals(1, result.get(from).size());
+        assertEquals("student_1", result.get(from).getFirst().studentId());
+        verify(lessonRepository, times(1))
+                .findByStatusInAndStudentIdAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any(), any());
     }
 }

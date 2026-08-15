@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.videoplatform.booking.dto.LessonCreateDto;
 import ru.videoplatform.booking.dto.LessonResponseDto;
 import ru.videoplatform.booking.exception.SlotConflictException;
+import ru.videoplatform.booking.model.Lesson;
 import ru.videoplatform.booking.model.LessonStatus;
 import ru.videoplatform.booking.repository.LessonRepository;
 
@@ -53,10 +54,21 @@ public class LessonService {
         return LessonResponseDto.from(lessonRepository.save(canceledLesson));
     }
 
-    public Map<Instant, List<LessonResponseDto>> getLessonsCalendarInInterval(Instant from, Instant to) {
+    public Map<Instant, List<LessonResponseDto>> getLessonsTeacher(Instant from, Instant to) {
         var lessons = lessonRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(
                 List.of(LessonStatus.SCHEDULED), from, to
         );
+        return groupLessonsByDay(lessons);
+    }
+
+    public Map<Instant, List<LessonResponseDto>> getLessonsStudent(String studentId, Instant from, Instant to) {
+        var lessons = lessonRepository.findByStatusInAndStudentIdAndStartTimeBetweenOrderByStartTimeAsc(
+                List.of(LessonStatus.SCHEDULED), studentId, from, to
+        );
+        return groupLessonsByDay(lessons);
+    }
+
+    private Map<Instant, List<LessonResponseDto>> groupLessonsByDay(List<Lesson> lessons) {
         return lessons.stream()
                 .collect(Collectors.groupingBy(
                         lesson -> lesson.getStartTime().truncatedTo(ChronoUnit.DAYS),
