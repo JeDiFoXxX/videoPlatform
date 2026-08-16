@@ -18,6 +18,7 @@
     <modules>
         <module>services/api-gateway</module>
         <module>services/booking-service</module>
+        <module>services/bot-service</module>
         <module>services/signaling-service</module>
         <module>services/notification-service</module>
     </modules>
@@ -61,6 +62,9 @@
                             ${maven.multiModuleProjectDirectory}/services/booking-service/src/main/java
                         </sourceDirectory>
                         <sourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/bot-service/src/main/java
+                        </sourceDirectory>
+                        <sourceDirectory>
                             ${maven.multiModuleProjectDirectory}/services/signaling-service/src/main/java
                         </sourceDirectory>
                         <sourceDirectory>
@@ -73,6 +77,9 @@
                         </testSourceDirectory>
                         <testSourceDirectory>
                             ${maven.multiModuleProjectDirectory}/services/booking-service/src/test/java
+                        </testSourceDirectory>
+                        <testSourceDirectory>
+                            ${maven.multiModuleProjectDirectory}/services/bot-service/src/test/java
                         </testSourceDirectory>
                         <testSourceDirectory>
                             ${maven.multiModuleProjectDirectory}/services/signaling-service/src/test/java
