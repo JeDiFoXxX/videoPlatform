@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
                 "telegram.webhook.secret-token=test_secret_bot_token",
                 "spring.data.redis.host=localhost",
                 "spring.data.redis.port=6379",
+                "telegram.webhook.tg.id.pattern=\"from\"\\\\s*:\\\\s*\\\\{\\\\s*\"id\"\\\\s*:\\\\s*(\\\\d+)",
                 "spring.security.oauth2.resourceserver.jwt.issuer-uri="
                         + "http://localhost:0000/realms/videoplatform"
         })

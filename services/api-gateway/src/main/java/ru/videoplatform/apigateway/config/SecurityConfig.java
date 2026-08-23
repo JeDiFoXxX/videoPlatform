@@ -38,6 +38,9 @@ public class SecurityConfig {
     @Value("${services.bot-service.uri}")
     private String botServiceUri;
 
+    @Value("${telegram.webhook.tg.id.pattern}")
+    private String tgIdPattern;
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
@@ -62,11 +65,10 @@ public class SecurityConfig {
     @Bean
     public KeyResolver smartKeyResolver() {
         return exchange -> {
-            var tgIdPattern = Pattern.compile("\"from\"\\s*:\\s*\\{\\s*\"id\"\\s*:\\s*(\\d+)");
+            var pattern = Pattern.compile(tgIdPattern);
             var cachedBody = exchange.getAttribute("cachedRequestBody");
-
             if (cachedBody instanceof String jsonString) {
-                var matcher = tgIdPattern.matcher(jsonString);
+                var matcher = pattern.matcher(jsonString);
                 if (matcher.find()) {
                     String tgUserId = matcher.group(1);
                     return Mono.just(tgUserId);
