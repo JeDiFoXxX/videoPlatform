@@ -25,30 +25,35 @@ import static org.junit.jupiter.api.Assertions.*;
                 "telegram.webhook.secret-token=test_secret_bot_token",
                 "spring.data.redis.host=localhost",
                 "spring.data.redis.port=6379",
-                "telegram.webhook.tg.id.pattern=\"from\"\\\\s*:\\\\s*\\\\{\\\\s*\"id\"\\\\s*:\\\\s*(\\\\d+)",
-                "spring.security.oauth2.resourceserver.jwt.issuer-uri="
-                        + "http://localhost:0000/realms/videoplatform"
+                "telegram.webhook.tg-id-pattern=\"from\"\\\\s*:\\\\s*\\\\{\\\\s*\"id\"\\\\s*:\\\\s*(\\\\d+)",
+                "services.keycloak.client-id=test-gateway-client-id",
+                "services.keycloak.client-secret=test-gateway-secret",
+                "spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:4444/realms/videoplatform"
         })
 @AutoConfigureWebTestClient
-@Import(TestContainersConfig.class)
+@Import(TestConfig.class)
 @EnableWireMock({
         @ConfigureWireMock(name = "bot-service", port = 1111,
                 baseUrlProperties = {"services.bot-service.uri"}),
         @ConfigureWireMock(name = "signaling-service", port = 2222,
                 baseUrlProperties = {"services.signaling-service.uri"}),
         @ConfigureWireMock(name = "booking-service", port = 3333,
-                baseUrlProperties = {"services.booking-service.uri"})
+                baseUrlProperties = {"services.booking-service.uri"}),
+        @ConfigureWireMock(name = "keycloak-service", port = 4444)
 })
 public class ApiGatewayITest {
 
     @InjectWireMock("bot-service")
-    WireMockServer botService;
+    private WireMockServer botService;
 
     @InjectWireMock("signaling-service")
-    WireMockServer signalingService;
+    private WireMockServer signalingService;
 
     @InjectWireMock("booking-service")
-    WireMockServer bookingService;
+    private WireMockServer bookingService;
+
+    @InjectWireMock("keycloak-service")
+    private WireMockServer keycloakService;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -157,9 +162,9 @@ public class ApiGatewayITest {
     @Test
     @DisplayName("Должен успешно пропускать запрос при валидном секретном токене Telegram")
     void shouldAllowRequestWhenTelegramSecretTokenIsValid() {
+        clearRedisRateLimiterKeys();
         botService.stubFor(post("/test/event")
                 .willReturn(aResponse().withStatus(HttpStatus.OK.value())));
-        clearRedisRateLimiterKeys();
         webTestClient.post()
                 .uri("/test/event")
                 .header("X-Telegram-Bot-Api-Secret-Token",
@@ -172,9 +177,18 @@ public class ApiGatewayITest {
     @Test
     @DisplayName("Должен создавать ключ в Redis и блокировать запросы с кодом 429 при превышении лимита")
     void shouldBlockWithRateLimitAndCreateCorrectRedisKey() {
+        clearRedisRateLimiterKeys();
         botService.stubFor(post("/test/event")
                 .willReturn(aResponse().withStatus(HttpStatus.OK.value())));
-        clearRedisRateLimiterKeys();
+        keycloakService.stubFor(post(urlEqualTo("/realms/videoplatform/protocol/openid-connect/token"))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withRequestBody(containing("client_id=test-gateway-client"))
+                .withRequestBody(containing("client_secret=test-gateway-secret"))
+                .withRequestBody(containing("requested_subject=111111"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"access_token\": \"fake_test_jwt_token_here\"}")));
         HttpStatusCode responseStatus = HttpStatus.ACCEPTED;
         for (int i = 0; i < 5; i++) {
             responseStatus = webTestClient.post()
@@ -192,8 +206,45 @@ public class ApiGatewayITest {
         var keyOptional = redisTemplate.keys("request_rate_limiter.*").stream().findFirst();
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, responseStatus);
         assertTrue(keyOptional.isPresent());
-        assertFalse(keyOptional.get().contains("anonymous"));
         assertTrue(keyOptional.get().contains("111111"));
+    }
+
+    @Test
+    @DisplayName("Должен мгновенно возвращать 200 OK и блокировать, если в теле вебхука нет Telegram ID")
+    void shouldDropWith200AndAbortChainWhenTgIdIsMissing() {
+        clearRedisRateLimiterKeys();
+        webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token", "test_secret_bot_token")
+                .bodyValue(createTelegramJsonBodyWithoutId())
+                .exchange()
+                .expectStatus().isOk();
+        assertTrue(redisTemplate.keys("request_rate_limiter.*").isEmpty());
+        keycloakService.verify(0, postRequestedFor(urlEqualTo(
+                "/realms/videoplatform/protocol/openid-connect/token")));
+    }
+
+    @Test
+    @DisplayName("Должен возвращать 200 OK и блокировать, если tgId нет в базе Keycloak")
+    void shouldDropWith200AndAbortChainWhenUserNotFoundInKeycloak() {
+        clearRedisRateLimiterKeys();
+        keycloakService.stubFor(post(urlEqualTo("/realms/videoplatform/protocol/openid-connect/token"))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withRequestBody(containing("client_id=test-gateway-client-id"))
+                .withRequestBody(containing("client_secret=test-gateway-secret"))
+                .withRequestBody(containing("requested_subject=111111"))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.UNAUTHORIZED.value())
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"error\": \"invalid_grant\", \"error_description\": \"User not found\"}")));
+        webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token", "test_secret_bot_token")
+                .bodyValue(createTelegramJsonBody())
+                .exchange()
+                .expectStatus().isOk();
+        var redisKeys = redisTemplate.keys("request_rate_limiter.*");
+        assertTrue(redisKeys.isEmpty());
     }
 
     private void clearRedisRateLimiterKeys() {
@@ -214,6 +265,18 @@ public class ApiGatewayITest {
                       "is_bot": false,
                       "first_name": "test_name"
                     },
+                    "text": "test"
+                  }
+                }
+                """;
+    }
+
+    private String createTelegramJsonBodyWithoutId() {
+        return """
+                {
+                  "update_id": 999999,
+                  "message": {
+                    "message_id": 2,
                     "text": "test"
                   }
                 }

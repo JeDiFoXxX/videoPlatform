@@ -9,7 +9,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
-public class TestContainersConfig {
+public class TestConfig {
 
     @Bean
     @ServiceConnection(name = "redis")

@@ -1,5 +1,6 @@
 package ru.videoplatform.apigateway.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -20,6 +21,9 @@ import java.util.regex.Pattern;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private TgAuthFilter tgAuthFilter;
+
     @Value("${telegram.webhook.secret-token}")
     private String telegramWebhookToken;
 
@@ -38,7 +42,7 @@ public class SecurityConfig {
     @Value("${services.bot-service.uri}")
     private String botServiceUri;
 
-    @Value("${telegram.webhook.tg.id.pattern}")
+    @Value("${telegram.webhook.tg-id-pattern}")
     private String tgIdPattern;
 
     @Bean
@@ -63,28 +67,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    public KeyResolver smartKeyResolver() {
-        return exchange -> {
-            var pattern = Pattern.compile(tgIdPattern);
-            var cachedBody = exchange.getAttribute("cachedRequestBody");
-            if (cachedBody instanceof String jsonString) {
-                var matcher = pattern.matcher(jsonString);
-                if (matcher.find()) {
-                    String tgUserId = matcher.group(1);
-                    return Mono.just(tgUserId);
-                }
-            }
-            return Mono.just("anonymous");
-        };
-    }
-
-    @Bean
-    public RedisRateLimiter customRateLimiter() {
-        int replenishRatePerSecond = Math.max(1, rateLimitRefill / 60);
-        return new RedisRateLimiter(replenishRatePerSecond, rateLimitCapacity);
-    }
-
-    @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder,
                                            RedisRateLimiter customRateLimiter,
                                            KeyResolver smartKeyResolver) {
@@ -94,6 +76,7 @@ public class SecurityConfig {
                         .and().method("POST")
                         .filters(filter -> filter
                                 .cacheRequestBody(String.class)
+                                .filter(tgAuthFilter.apply())
                                 .requestRateLimiter(config -> config
                                         .setRateLimiter(customRateLimiter)
                                         .setKeyResolver(smartKeyResolver)))
@@ -107,5 +90,26 @@ public class SecurityConfig {
                         .and().method("GET")
                         .uri(signalingServiceUri))
                 .build();
+    }
+
+    @Bean
+    public KeyResolver smartKeyResolver() {
+        return exchange -> {
+            var pattern = Pattern.compile(tgIdPattern);
+            var cachedBody = exchange.getAttribute("cachedRequestBody");
+            if (cachedBody instanceof String jsonString) {
+                var matcher = pattern.matcher(jsonString);
+                if (matcher.find()) {
+                    return Mono.just(matcher.group(1));
+                }
+            }
+            return Mono.empty();
+        };
+    }
+
+    @Bean
+    public RedisRateLimiter customRateLimiter() {
+        int replenishRatePerSecond = Math.max(1, rateLimitRefill / 60);
+        return new RedisRateLimiter(replenishRatePerSecond, rateLimitCapacity);
     }
 }
