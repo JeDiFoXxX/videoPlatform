@@ -3,15 +3,47 @@
   "enabled": true,
   "displayName": "Video Platform",
   "registrationAllowed": false,
-  "loginWithEmailAllowed": true,
   "clients": [
     {
-      "clientId": "videoplatform-client",
+      "clientId": "pc-client",
       "enabled": true,
       "publicClient": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"]
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ]
+    },
+    {
+      "clientId": "api-gateway-client",
+      "enabled": true,
+      "secret": "super-secret-gateway-key-12345",
+      "publicClient": false,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "authorizationServicesEnabled": true
     }
-  ]
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_TEACHER"
+      },
+      {
+        "name": "ROLE_STUDENT"
+      }
+    ]
+  },
+  "clientScopeMappings": {
+    "realm-management": [
+      {
+        "client": "api-gateway-client",
+        "roles": [ "view-users", "query-users" ]
+      }
+    ]
+  }
 }
