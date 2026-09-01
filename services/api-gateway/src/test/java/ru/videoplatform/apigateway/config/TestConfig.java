@@ -1,4 +1,4 @@
-package ru.videoplatform.apigateway;
+package ru.videoplatform.apigateway.config;
 
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;

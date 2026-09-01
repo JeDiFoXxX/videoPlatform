@@ -1,6 +1,6 @@
 package ru.videoplatform.apigateway.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -14,15 +14,17 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import reactor.core.publisher.Mono;
-
-import java.util.regex.Pattern;
+import ru.videoplatform.apigateway.config.filter.TelegramAuthFilter;
+import ru.videoplatform.apigateway.config.filter.TelegramIdParserFilter;
 
 @Configuration
 @EnableWebFluxSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private TgAuthFilter tgAuthFilter;
+    private final TelegramIdParserFilter telegramIdParserFilter;
+
+    private final TelegramAuthFilter telegramAuthFilter;
 
     @Value("${telegram.webhook.secret-token}")
     private String telegramWebhookToken;
@@ -42,9 +44,6 @@ public class SecurityConfig {
     @Value("${services.bot-service.uri}")
     private String botServiceUri;
 
-    @Value("${telegram.webhook.tg-id-pattern}")
-    private String tgIdPattern;
-
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
@@ -52,12 +51,12 @@ public class SecurityConfig {
                 .authorizeExchange(registry -> registry
                         .pathMatchers("/actuator/**").denyAll()
                         .pathMatchers("/**/event").access((authentication, context) -> {
-                            var incomingSecret = context.getExchange()
-                                    .getRequest()
-                                    .getHeaders()
+                            var exchange = context.getExchange();
+                            var incomingSecret = exchange.getRequest().getHeaders()
                                     .getFirst("X-Telegram-Bot-Api-Secret-Token");
-                            return Mono.just(new AuthorizationDecision(telegramWebhookToken
-                                    .equals(incomingSecret)));
+                            return Mono.just(new AuthorizationDecision(
+                                    telegramWebhookToken.equals(incomingSecret))
+                            );
                         })
                         .pathMatchers("/api/**", "/ws/**").authenticated()
                         .anyExchange().denyAll()
@@ -76,7 +75,8 @@ public class SecurityConfig {
                         .and().method("POST")
                         .filters(filter -> filter
                                 .cacheRequestBody(String.class)
-                                .filter(tgAuthFilter.apply())
+                                .filter(telegramIdParserFilter.apply())
+                                .filter(telegramAuthFilter.apply())
                                 .requestRateLimiter(config -> config
                                         .setRateLimiter(customRateLimiter)
                                         .setKeyResolver(smartKeyResolver)))
@@ -95,13 +95,8 @@ public class SecurityConfig {
     @Bean
     public KeyResolver smartKeyResolver() {
         return exchange -> {
-            var pattern = Pattern.compile(tgIdPattern);
-            var cachedBody = exchange.getAttribute("cachedRequestBody");
-            if (cachedBody instanceof String jsonString) {
-                var matcher = pattern.matcher(jsonString);
-                if (matcher.find()) {
-                    return Mono.just(matcher.group(1));
-                }
+            if (exchange.getAttribute("extractedTgId") instanceof String telegramId) {
+                return Mono.just(telegramId);
             }
             return Mono.empty();
         };
