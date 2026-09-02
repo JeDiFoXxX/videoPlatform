@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -51,8 +50,7 @@ public class TelegramAuthFilter {
                         .with("client_secret", keycloakClientSecret))
                 .retrieve()
                 .bodyToMono(KeycloakTokenResponse.class)
-                .map(KeycloakTokenResponse::accessToken)
-                .cache(Duration.ofMinutes(5));
+                .map(KeycloakTokenResponse::accessToken);
     }
 
     private Mono<KeycloakUserResponse> getUserFromTelegramId(String clientToken, String telegramId) {
