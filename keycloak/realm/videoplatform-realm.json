@@ -25,7 +25,10 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "authorizationServicesEnabled": true
+      "authorizationServicesEnabled": true,
+      "attributes": {
+        "access.token.lifespan": "30"
+      }
     }
   ],
   "roles": {
@@ -38,12 +41,20 @@
       }
     ]
   },
-  "clientScopeMappings": {
-    "realm-management": [
-      {
-        "client": "api-gateway-client",
-        "roles": [ "view-users", "query-users" ]
+  "users": [
+    {
+      "username": "service-account-api-gateway-client",
+      "enabled": true,
+      "serviceAccountClientId": "api-gateway-client",
+      "clientRoles": {
+        "realm-management": [
+          "query-users",
+          "view-users"
+        ],
+        "api-gateway-client": [
+          "uma_protection"
+        ]
       }
-    ]
-  }
+    }
+  ]
 }
