@@ -1,5 +1,6 @@
 package ru.videoplatform.apigateway.config.filter;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,18 +31,35 @@ public class TelegramIdParserFilter {
         }
 
         var update = objectMapper.readValue(jsonString, TelegramUpdate.class);
-        if (update.message() == null || update.message().from() == null || update.message().from().id() == null) {
+        var extractedTgId = 0L;
+
+        if (update.message() != null && update.message().from() != null) {
+            extractedTgId = update.message().from().id();
+        }
+
+        if (update.callbackQuery() != null && update.callbackQuery().from() != null) {
+            extractedTgId = update.callbackQuery().from().id();
+        }
+
+        if (extractedTgId == 0L) {
             throw new RuntimeException("Telegram User ID not found in the JSON structure");
         }
 
-        var extractedTgId = update.message().from().id().toString();
-        exchange.getAttributes().put("extractedTgId", extractedTgId);
+        exchange.getAttributes().put("extractedTgId", String.valueOf(extractedTgId));
     }
 
-    private record TelegramUpdate(@JsonProperty("message") TelegramMessage message) {
-        private record TelegramMessage(@JsonProperty("from") TelegramUser from) {
-            private record TelegramUser(@JsonProperty("id") Long id) {
-            }
-        }
-    }
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TelegramUpdate(
+            @JsonProperty("message") TelegramMessage message,
+            @JsonProperty("callback_query") TelegramCallbackQuery callbackQuery
+    ) { }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TelegramMessage(@JsonProperty("from") TelegramUser from) { }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TelegramCallbackQuery(@JsonProperty("from") TelegramUser from) { }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TelegramUser(@JsonProperty("id") Long id) { }
 }
