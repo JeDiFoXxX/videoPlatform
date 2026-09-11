@@ -60,8 +60,8 @@ class LessonRepositoryTest {
                 .status(LessonStatus.SCHEDULED)
                 .build();
         entityManager.persistAndFlush(existingLesson);
-        Instant newStart = baseTime.plus(30, ChronoUnit.MINUTES);
-        Instant newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
+        var newStart = baseTime.plus(30, ChronoUnit.MINUTES);
+        var newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
         var result = lessonRepository.existsByStatusInAndEndTimeAfterAndStartTimeBefore(
                 List.of(LessonStatus.SCHEDULED), newStart, newEnd
         );
@@ -78,8 +78,8 @@ class LessonRepositoryTest {
                 .status(LessonStatus.SCHEDULED)
                 .build();
         entityManager.persistAndFlush(existingLesson);
-        Instant newStart = baseTime;
-        Instant newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
+        var newStart = baseTime;
+        var newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
         var result = lessonRepository.existsByStatusInAndEndTimeAfterAndStartTimeBefore(
                 List.of(LessonStatus.SCHEDULED), newStart, newEnd
         );
