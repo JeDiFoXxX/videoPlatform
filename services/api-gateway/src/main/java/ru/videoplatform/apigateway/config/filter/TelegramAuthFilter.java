@@ -72,7 +72,7 @@ public class TelegramAuthFilter {
                                              KeycloakUserResponse response) {
         var modifiedRequest = exchange.getRequest().mutate()
                 .header("Authorization", "Bearer " + systemToken)
-                .header("User-id", response.id() != null ? response.id() : "")
+                .header("Student-id", response.id() != null ? response.id() : "")
                 .header("First-name", response.firstName() != null ? response.firstName() : "")
                 .header("Last-name", response.lastName() != null ? response.lastName() : "")
                 .build();
