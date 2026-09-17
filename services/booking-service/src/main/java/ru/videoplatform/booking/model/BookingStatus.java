@@ -1,6 +1,6 @@
 package ru.videoplatform.booking.model;
 
-public enum LessonStatus {
+public enum BookingStatus {
     SCHEDULED,
     FINISHED,
     CANCELED

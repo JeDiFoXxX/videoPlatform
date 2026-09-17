@@ -14,15 +14,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Builder(toBuilder = true)
-@Table(name = "lessons")
-public class Lesson {
+@Table(name = "booking")
+public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "student_id", nullable = false)
-    private String studentId;
+    private UUID studentId;
 
     @Column(name = "start_time", nullable = false)
     private Instant startTime;
@@ -32,5 +32,5 @@ public class Lesson {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private LessonStatus status;
+    private BookingStatus status;
 }
