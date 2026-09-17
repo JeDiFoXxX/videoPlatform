@@ -3,12 +3,12 @@ package ru.videoplatform.booking.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.videoplatform.booking.dto.ErrorResponseDto;
 
-@ControllerAdvice
-public class GlobalExceptionHandler {
+@RestControllerAdvice
+public class BookingGlobalExceptionHandler {
 
     @ExceptionHandler(SlotConflictException.class)
     public ResponseEntity<ErrorResponseDto> handleBusinessConflict(SlotConflictException ex) {
@@ -24,11 +24,17 @@ public class GlobalExceptionHandler {
         if (rootMessage != null && rootMessage.contains("unique_index_start_time")) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponseDto("Conflict", "Слот уже занят"));
+                    .body(new ErrorResponseDto(
+                            "Conflict",
+                            "Данное время уже забронировано.")
+                    );
         }
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponseDto("Bad Request", "Ошибка валидации данных базы"));
+                .body(new ErrorResponseDto(
+                        "Bad Request",
+                        "Не удалось сохранить запись. Попробуйте позже.")
+                );
     }
 }
