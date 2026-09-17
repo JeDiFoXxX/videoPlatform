@@ -30,6 +30,7 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
       env:
+        SERVER_PORT: 8080
         DB_URL: jdbc:postgresql://localhost:5432/fake_db
         DB_USERNAME: postgres
         DB_PASSWORD: password
