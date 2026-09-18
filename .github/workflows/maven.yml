@@ -34,12 +34,13 @@ jobs:
         DB_URL: jdbc:postgresql://localhost:5432/fake_db
         DB_USERNAME: postgres
         DB_PASSWORD: password
+        MONGODB_URI: mongodb://localhost:27017/fake_db
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
         KEYCLOAK_BASE_URI: http://localhost:8080
         KEYCLOAK_CLIENT_ID: random-client
         KEYCLOAK_CLIENT_SECRET: super-secret-key
         JWT_ISSUER_URI: http://localhost:8080/realms/videoplatform
-        REDIS_HOST: localhost
-        REDIS_PORT: 6379
         SIGNALING_SERVICE_URI: http://localhost:8080
         BOOKING_SERVICE_URI: http://localhost:8080
         BOT_SERVICE_URI: http://localhost:8080
