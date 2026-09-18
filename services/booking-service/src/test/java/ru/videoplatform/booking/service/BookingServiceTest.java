@@ -58,7 +58,7 @@ class BookingServiceTest {
     @DisplayName("Должен успешно создавать запись, когда лимиты и пересечения чисты")
     void shouldCreateBookingSuccessfully() {
         var validation = new BookingValidationResult(0, 0);
-        given(bookingRepository.checkStudentLessonsAndIntersections(any(), any(), any()))
+        given(bookingRepository.checkStudentBookingsAndIntersections(any(), any(), any()))
                 .willReturn(validation);
         given(bookingRepository.save(any())).willReturn(
                 Booking.builder()
@@ -75,15 +75,15 @@ class BookingServiceTest {
         assertEquals(bookingId, response.bookingId());
         assertEquals(baseTime, response.startTime());
         verify(bookingRepository, times(1))
-                .checkStudentLessonsAndIntersections(any(), any(), any());
+                .checkStudentBookingsAndIntersections(any(), any(), any());
         verify(bookingRepository, times(1)).save(any());
     }
 
     @Test
     @DisplayName("Должен выбросить SlotConflictException, если активных уроков уже 2")
-    void shouldThrowSlotConflictExceptionWhenMaxLessonsReached() {
+    void shouldThrowSlotConflictExceptionWhenMaxBookingsReached() {
         var validation = new BookingValidationResult(2, 0);
-        given(bookingRepository.checkStudentLessonsAndIntersections(any(), any(), any()))
+        given(bookingRepository.checkStudentBookingsAndIntersections(any(), any(), any()))
                 .willReturn(validation);
 
         var exception = assertThrows(SlotConflictException.class, () ->
@@ -93,7 +93,7 @@ class BookingServiceTest {
         assertEquals("Вы не можете записаться более чем на 2 урока одновременно.",
                 exception.getMessage());
         verify(bookingRepository, times(1))
-                .checkStudentLessonsAndIntersections(any(), any(), any());
+                .checkStudentBookingsAndIntersections(any(), any(), any());
         verify(bookingRepository, never()).save(any());
     }
 
@@ -101,7 +101,7 @@ class BookingServiceTest {
     @DisplayName("Должен выбросить SlotConflictException, если время пересекается с существующим")
     void shouldThrowSlotConflictExceptionWhenTimeOverlaps() {
         var validation = new BookingValidationResult(0, 1);
-        given(bookingRepository.checkStudentLessonsAndIntersections(any(), any(), any()))
+        given(bookingRepository.checkStudentBookingsAndIntersections(any(), any(), any()))
                 .willReturn(validation);
         var exception = assertThrows(SlotConflictException.class, () ->
                 bookingService.createBooking(validDto)
@@ -110,7 +110,7 @@ class BookingServiceTest {
         assertEquals("Данное время уже забронировано. Пожалуйста, выберите другое время.",
                 exception.getMessage());
         verify(bookingRepository, times(1))
-                .checkStudentLessonsAndIntersections(any(), any(), any());
+                .checkStudentBookingsAndIntersections(any(), any(), any());
         verify(bookingRepository, never()).save(any());
     }
 

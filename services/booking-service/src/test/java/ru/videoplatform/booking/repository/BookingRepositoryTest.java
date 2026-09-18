@@ -38,79 +38,79 @@ class BookingRepositoryTest {
 
     @Test
     @DisplayName("Должен генерировать id при сохранении урока в БД")
-    void shouldGenerateIdWhenLessonIsPersisted() {
-        var lessonToSave = Booking.builder()
+    void shouldGenerateIdWhenBookingIsPersisted() {
+        var bookingToSave = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
-        var savedLesson = entityManager.persistAndFlush(lessonToSave);
+        var savedBooking = entityManager.persistAndFlush(bookingToSave);
 
-        assertNotNull(savedLesson.getId());
+        assertNotNull(savedBooking.getId());
     }
 
     @Test
     @DisplayName("Должен обнаружить пересечение и посчитать активные уроки через нативный запрос")
-    void shouldDetectOverlapAndCountActiveLessons() {
-        var existingLesson = Booking.builder()
+    void shouldDetectOverlapAndCountActiveBookings() {
+        var existingBooking = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
 
-        entityManager.persistAndFlush(existingLesson);
+        entityManager.persistAndFlush(existingBooking);
 
         var newStart = baseTime.plus(30, ChronoUnit.MINUTES);
         var newEnd = baseTime.plus(90, ChronoUnit.MINUTES);
-        var result = bookingRepository.checkStudentLessonsAndIntersections(studentId, newStart, newEnd);
+        var result = bookingRepository.checkStudentBookingsAndIntersections(studentId, newStart, newEnd);
 
         assertNotNull(result);
-        assertEquals(1, result.activeLessonsCount());
+        assertEquals(1, result.activeBookingsCount());
         assertEquals(1, result.timeOverlapsCount());
     }
 
     @Test
     @DisplayName("Не должен находить пересечение через нативный запрос, если уроки идут строго подряд")
-    void shouldNotDetectOverlapWhenLessonsAreBackToBack() {
-        var existingLesson = Booking.builder()
+    void shouldNotDetectOverlapWhenBookingsAreBackToBack() {
+        var existingBooking = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime.minus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime)
                 .status(BookingStatus.SCHEDULED)
                 .build();
 
-        entityManager.persistAndFlush(existingLesson);
+        entityManager.persistAndFlush(existingBooking);
 
         var newEnd = baseTime.plus(60, ChronoUnit.MINUTES);
-        var result = bookingRepository.checkStudentLessonsAndIntersections(studentId, baseTime, newEnd);
+        var result = bookingRepository.checkStudentBookingsAndIntersections(studentId, baseTime, newEnd);
 
         assertNotNull(result);
-        assertEquals(1, result.activeLessonsCount());
+        assertEquals(1, result.activeBookingsCount());
         assertEquals(0, result.timeOverlapsCount());
     }
 
     @Test
     @DisplayName("Должен выбросить ConstraintViolationException при дублировании времени слота")
     void shouldThrowExceptionWhenDuplicateStartTime() {
-        var firstLessonSignUp = Booking.builder()
+        var firstBookingSignUp = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
-        var secondLessonSignUp = Booking.builder()
+        var secondBookingSignUp = Booking.builder()
                 .studentId(UUID.randomUUID())
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
 
-        entityManager.persistAndFlush(firstLessonSignUp);
+        entityManager.persistAndFlush(firstBookingSignUp);
 
         var exception = assertThrows(Exception.class, () ->
-                entityManager.persistAndFlush(secondLessonSignUp)
+                entityManager.persistAndFlush(secondBookingSignUp)
         );
 
         assertTrue(exception.getCause() instanceof ConstraintViolationException
@@ -119,39 +119,39 @@ class BookingRepositoryTest {
 
     @Test
     @DisplayName("Должен успешно найти урок по статусу и ID для отмены")
-    void shouldFindLessonByStatusAndId() {
-        var existingLesson = Booking.builder()
+    void shouldFindBookingByStatusAndId() {
+        var existingBooking = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
-        var savedLesson = entityManager.persistAndFlush(existingLesson);
+        var savedBooking = entityManager.persistAndFlush(existingBooking);
 
-        var result = bookingRepository.findByStatusAndId(BookingStatus.SCHEDULED, savedLesson.getId());
+        var result = bookingRepository.findByStatusAndId(BookingStatus.SCHEDULED, savedBooking.getId());
 
         assertTrue(result.isPresent());
-        assertEquals(savedLesson.getId(), result.get().getId());
+        assertEquals(savedBooking.getId(), result.get().getId());
     }
 
     @Test
     @DisplayName("Должен находить запланированные уроки в интервале времени с сортировкой по возрастанию")
-    void shouldFindScheduledLessonsWithinDayRangeOrderedByStartTimeAsc() {
-        var firstExistingLesson = Booking.builder()
+    void shouldFindScheduledBookingsWithinDayRangeOrderedByStartTimeAsc() {
+        var firstExistingBooking = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
-        var secondExistingLesson = Booking.builder()
+        var secondExistingBooking = Booking.builder()
                 .studentId(UUID.randomUUID())
                 .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime.plus(120, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
 
-        entityManager.persistAndFlush(firstExistingLesson);
-        entityManager.persistAndFlush(secondExistingLesson);
+        entityManager.persistAndFlush(firstExistingBooking);
+        entityManager.persistAndFlush(secondExistingBooking);
 
         var result = bookingRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(
                 List.of(BookingStatus.SCHEDULED),
@@ -160,28 +160,28 @@ class BookingRepositoryTest {
         );
 
         assertEquals(2, result.size());
-        assertEquals(firstExistingLesson.getId(), result.getFirst().getId());
-        assertEquals(secondExistingLesson.getId(), result.getLast().getId());
+        assertEquals(firstExistingBooking.getId(), result.getFirst().getId());
+        assertEquals(secondExistingBooking.getId(), result.getLast().getId());
     }
 
     @Test
     @DisplayName("Должен находить все активные уроки конкретного студента")
-    void shouldFindAllActiveLessonsForSpecificStudent() {
-        var studentLesson = Booking.builder()
+    void shouldFindAllActiveBookingsForSpecificStudent() {
+        var studentBooking = Booking.builder()
                 .studentId(studentId)
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
-        var anotherStudentLesson = Booking.builder()
+        var anotherStudentBooking = Booking.builder()
                 .studentId(UUID.randomUUID())
                 .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime.plus(120, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
 
-        entityManager.persist(studentLesson);
-        entityManager.persist(anotherStudentLesson);
+        entityManager.persist(studentBooking);
+        entityManager.persist(anotherStudentBooking);
         entityManager.flush();
 
         var result = bookingRepository.findByStatusInAndStudentId(
@@ -190,6 +190,6 @@ class BookingRepositoryTest {
         );
 
         assertEquals(1, result.size());
-        assertEquals(studentLesson.getId(), result.getFirst().getId());
+        assertEquals(studentBooking.getId(), result.getFirst().getId());
     }
 }

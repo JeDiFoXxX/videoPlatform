@@ -30,13 +30,13 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     @Query(value = """
         SELECT 
             COUNT(CASE WHEN student_id = :studentId THEN 1 END)
-            ::int AS activeLessonsCount,
+            ::int AS activeBookingsCount,
             COUNT(CASE WHEN start_time < :endTime AND end_time > :startTime THEN 1 END)
             ::int AS timeOverlapsCount
         FROM booking
         WHERE status = 'SCHEDULED'
         """, nativeQuery = true)
-    BookingValidationResult checkStudentLessonsAndIntersections(
+    BookingValidationResult checkStudentBookingsAndIntersections(
             @Param("studentId") UUID studentId,
             @Param("startTime") Instant startTime,
             @Param("endTime") Instant endTime

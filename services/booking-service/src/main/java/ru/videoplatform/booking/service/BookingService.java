@@ -25,11 +25,11 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDto createBooking(BookingRequestDto dto) {
-        var validation = bookingRepository.checkStudentLessonsAndIntersections(
+        var validation = bookingRepository.checkStudentBookingsAndIntersections(
                 dto.studentId(), dto.startTime(), dto.endTime()
         );
 
-        if (validation.activeLessonsCount() == 2) {
+        if (validation.activeBookingsCount() == 2) {
             throw new SlotConflictException(
                     "Вы не можете записаться более чем на 2 урока одновременно.");
         }
