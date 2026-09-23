@@ -30,21 +30,23 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
       env:
-        SERVER_PORT: 8080
-        DB_URL: jdbc:postgresql://localhost:5432/fake_db
-        DB_USERNAME: postgres
-        DB_PASSWORD: password
-        MONGODB_URI: mongodb://localhost:27017/fake_db
+        SERVER_PORT: 1111
+        BOOKING_DB_URL: jdbc:postgresql://localhost:5432/booking_fake_db
+        BOOKING_DB_USERNAME: postgres
+        BOOKING_DB_PASSWORD: password
+        NOTIFICATION_DB_URL: jdbc:postgresql://localhost:5432/notification_fake_db
+        NOTIFICATION_DB_USERNAME: postgres
+        NOTIFICATION_DB_PASSWORD: password
         REDIS_HOST: localhost
         REDIS_PORT: 6379
-        KEYCLOAK_BASE_URI: http://localhost:8080
+        KEYCLOAK_BASE_URI: http://localhost:1111
         KEYCLOAK_CLIENT_ID: random-client
         KEYCLOAK_CLIENT_SECRET: super-secret-key
-        JWT_ISSUER_URI: http://localhost:8080/realms/videoplatform
-        SIGNALING_SERVICE_URI: http://localhost:8080
-        BOOKING_SERVICE_URI: http://localhost:8080
-        BOT_SERVICE_URI: http://localhost:8080
-        NOTIFICATION_SERVICE_URI: http://localhost:8080
+        JWT_ISSUER_URI: http://localhost:1111/realms/videoplatform
+        SIGNALING_SERVICE_URI: http://localhost:1111
+        BOOKING_SERVICE_URI: http://localhost:1111
+        BOT_SERVICE_URI: http://localhost:1111
+        NOTIFICATION_SERVICE_URI: http://localhost:1111
         TELEGRAM_WEBHOOK_SECRET_TOKEN: telegram-secret-token
         GATEWAY_RATE_LIMIT_CAPACITY: 60
         GATEWAY_RATE_LIMIT_REFILL_PER_MINUTE: 60
