@@ -9,7 +9,7 @@ import ru.videoplatform.notification.service.NotificationService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/notification")
+@RequestMapping("/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 

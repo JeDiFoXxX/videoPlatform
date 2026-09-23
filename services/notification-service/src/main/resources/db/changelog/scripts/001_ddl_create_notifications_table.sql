@@ -1,7 +1,7 @@
 --liquibase formatted sql
---changeset JeDiFox:001_ddl_create_notification_table
+--changeset JeDiFox:001_ddl_create_notifications_table
 
-CREATE TABLE notification (
+CREATE TABLE notifications (
     id          UUID PRIMARY KEY,
     chat_id     BIGINT NOT NULL,
     booking_id  UUID NOT NULL,

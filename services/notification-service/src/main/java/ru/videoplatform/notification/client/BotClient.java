@@ -7,10 +7,10 @@ import ru.videoplatform.notification.dto.BotNotificationRequestDto;
 
 @FeignClient(
         name = "bot-service",
-        url = "${services.bot-service.uri}/api/v1/bot"
+        url = "${services.bot-service.uri}/bot"
 )
 public interface BotClient {
 
-    @PostMapping("/internal/notifications")
+    @PostMapping("/execute")
     void sendNotification(@RequestBody BotNotificationRequestDto dto);
 }
