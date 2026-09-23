@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     private final TelegramAuthFilter telegramAuthFilter;
 
-    @Value("${telegram.webhook.secret-token}")
+    @Value("${telegram.secret-token}")
     private String telegramWebhookToken;
 
     @Value("${gateway.rate-limit.capacity}")

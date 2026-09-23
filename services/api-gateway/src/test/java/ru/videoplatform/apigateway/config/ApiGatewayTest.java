@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
         properties = {
                 "gateway.rate-limit.capacity=1",
                 "gateway.rate-limit.refill-per-minute=1",
-                "telegram.webhook.secret-token=test_secret_bot_token",
+                "telegram.secret-token=test_secret_bot_token",
                 "spring.data.redis.host=localhost",
                 "spring.data.redis.port=6379",
                 "services.keycloak.client-id=test-gateway-client-id",
