@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @FeignClient(
         name = "notification-service",
-        url = "${services.notification-service.uri}/api/v1/notification"
+        url = "${services.notification-service.uri}/notifications"
 )
 public interface NotificationClient {
 

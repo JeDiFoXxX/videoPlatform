@@ -1,7 +1,7 @@
 --liquibase formatted sql
---changeset JeDiFox:001_ddl_create_booking_table
+--changeset JeDiFox:001_ddl_create_bookings_table
 
-CREATE TABLE booking (
+CREATE TABLE bookings (
     id          UUID PRIMARY KEY,
     student_id  UUID NOT NULL,
     start_time  TIMESTAMP NOT NULL,
