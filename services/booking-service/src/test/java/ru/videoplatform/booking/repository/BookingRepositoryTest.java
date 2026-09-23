@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest(properties = {
         "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver",
-        "spring.datasource.url=jdbc:tc:postgresql:17-alpine:///videoplatform_booking",
+        "spring.datasource.url=jdbc:tc:postgresql:17-alpine:///booking_db",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.liquibase.change-log=classpath:/db/changelog/db.changelog-master.xml",
         "services.notification-service.uri=http://localhost:1111"
