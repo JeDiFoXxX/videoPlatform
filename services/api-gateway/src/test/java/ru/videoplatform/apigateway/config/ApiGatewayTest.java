@@ -105,11 +105,11 @@ public class ApiGatewayTest {
     @DisplayName("Должен возвращать 401 Unauthorized для защищенных роутов без JWT")
     void shouldReturn401WhenAccessingProtectedRoutesAnonymously() {
         webTestClient.post()
-                .uri("/api/v1/booking/test")
+                .uri("/bookings/test")
                 .exchange()
                 .expectStatus().isUnauthorized();
         webTestClient.get()
-                .uri("/ws/v1/test")
+                .uri("/ws/test")
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
@@ -118,23 +118,23 @@ public class ApiGatewayTest {
     @WithMockUser
     @DisplayName("Должен пропускать разрешенные HTTP методы для авторизованного пользователя")
     void shouldAllowAccessToProtectedRoutesWhenAuthenticated() {
-        bookingService.stubFor(post("/api/v1/booking/test")
+        bookingService.stubFor(post("/bookings/test")
                 .willReturn(aResponse().withStatus(200)));
-        bookingService.stubFor(get("/api/v1/booking/test").
+        bookingService.stubFor(get("/bookings/test").
                 willReturn(aResponse().withStatus(200)));
-        signalingService.stubFor(get("/ws/v1/test")
+        signalingService.stubFor(get("/ws/test")
                 .willReturn(aResponse().withStatus(200)));
 
         webTestClient.post()
-                .uri("/api/v1/booking/test")
+                .uri("/bookings/test")
                 .exchange()
                 .expectStatus().isOk();
         webTestClient.get()
-                .uri("/api/v1/booking/test")
+                .uri("/bookings/test")
                 .exchange()
                 .expectStatus().isOk();
         webTestClient.get()
-                .uri("/ws/v1/test")
+                .uri("/ws/test")
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -145,7 +145,7 @@ public class ApiGatewayTest {
     void shouldDenyForbiddenHttpMethodsEvenWhenAuthenticated() {
         clearRedisRateLimiterKeys();
         webTestClient.delete()
-                .uri("/api/v1/booking/test")
+                .uri("/bookings/test")
                 .exchange()
                 .expectStatus().isNotFound();
         webTestClient.get()
@@ -155,7 +155,7 @@ public class ApiGatewayTest {
                 .exchange()
                 .expectStatus().isOk();
         webTestClient.post()
-                .uri("/ws/v1/test")
+                .uri("/ws/test")
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -295,7 +295,8 @@ public class ApiGatewayTest {
     }
 
     private void setupKeycloakTokenStub() {
-        keycloakService.stubFor(post(urlEqualTo("/realms/videoplatform/protocol/openid-connect/token"))
+        keycloakService.stubFor(post(urlEqualTo(
+                "/realms/videoplatform/protocol/openid-connect/token"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
@@ -303,7 +304,8 @@ public class ApiGatewayTest {
     }
 
     private void setupKeycloakTokenErrorStub() {
-        keycloakService.stubFor(post(urlEqualTo("/realms/videoplatform/protocol/openid-connect/token"))
+        keycloakService.stubFor(post(urlEqualTo(
+                "/realms/videoplatform/protocol/openid-connect/token"))
                 .willReturn(aResponse().withStatus(500)));
     }
 

@@ -23,11 +23,10 @@ import ru.videoplatform.apigateway.config.filter.TelegramIdParserFilter;
 public class SecurityConfig {
 
     private final TelegramIdParserFilter telegramIdParserFilter;
-
     private final TelegramAuthFilter telegramAuthFilter;
 
     @Value("${telegram.secret-token}")
-    private String telegramWebhookToken;
+    private String telegramToken;
 
     @Value("${gateway.rate-limit.capacity}")
     private int rateLimitCapacity;
@@ -55,10 +54,10 @@ public class SecurityConfig {
                             var incomingSecret = exchange.getRequest().getHeaders()
                                     .getFirst("X-Telegram-Bot-Api-Secret-Token");
                             return Mono.just(new AuthorizationDecision(
-                                    telegramWebhookToken.equals(incomingSecret))
+                                    telegramToken.equals(incomingSecret))
                             );
                         })
-                        .pathMatchers("/api/**", "/ws/**").authenticated()
+                        .pathMatchers("/bookings/**", "/ws/**").authenticated()
                         .anyExchange().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
@@ -82,11 +81,11 @@ public class SecurityConfig {
                                         .setKeyResolver(smartKeyResolver)))
                         .uri(botServiceUri))
                 .route("booking-service", route -> route
-                        .path("/api/v1/booking/**")
+                        .path("/bookings/**")
                         .and().method("GET", "POST")
                         .uri(bookingServiceUri))
                 .route("signaling-service", route -> route
-                        .path("/ws/v1/**")
+                        .path("/ws/**")
                         .and().method("GET")
                         .uri(signalingServiceUri))
                 .build();
