@@ -20,13 +20,13 @@ public class NotificationScheduler {
     private final NotificationService notificationService;
     private final BotClient botClient;
 
-    private final ZoneId moscowZone = ZoneId.of("Europe/Moscow");
+    private ZoneId moscowZone = ZoneId.of("Europe/Moscow");
 
-    private final DateTimeFormatter dayFormatter = DateTimeFormatter
+    private DateTimeFormatter dayFormatter = DateTimeFormatter
             .ofPattern("d MMMM", Locale.of("ru"))
             .withZone(moscowZone);
 
-    private final DateTimeFormatter timeFormatter = DateTimeFormatter
+    private DateTimeFormatter timeFormatter = DateTimeFormatter
             .ofPattern("HH:mm")
             .withZone(ZoneOffset.UTC);
 
