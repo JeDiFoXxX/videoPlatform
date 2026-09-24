@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.chat.Chat;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
@@ -31,11 +32,14 @@ class BotServiceTest {
     @Mock
     private CommandHandler callbackHandler;
 
+    @Mock
+    private TelegramClient telegramClient;
+
     private BotService botService;
 
     @BeforeEach
     void setUp() {
-        botService = new BotService(List.of(messageHandler, callbackHandler));
+        botService = new BotService(List.of(messageHandler, callbackHandler), telegramClient);
     }
 
     @Test

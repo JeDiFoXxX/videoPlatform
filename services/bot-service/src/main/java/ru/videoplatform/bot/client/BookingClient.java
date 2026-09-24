@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @FeignClient(
         name = "booking-service",
-        url = "${services.booking-service.uri}/api/v1/bookings"
+        url = "${services.booking-service.uri}/bookings"
 )
 public interface BookingClient {
 

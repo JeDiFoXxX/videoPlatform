@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import ru.videoplatform.bot.dto.BotNotificationRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.service.BotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,5 +36,12 @@ public class BotController {
                 ))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.ok().build());
+    }
+
+    @PostMapping("/execute")
+    public ResponseEntity<?> sendNotificationTelegramBot(
+            @RequestBody BotNotificationRequestDto dto) {
+        botService.sendNotificationTelegramBot(dto);
+        return ResponseEntity.ok().build();
     }
 }

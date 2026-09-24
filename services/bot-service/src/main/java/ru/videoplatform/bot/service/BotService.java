@@ -1,9 +1,14 @@
 package ru.videoplatform.bot.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
+import ru.videoplatform.bot.dto.BotNotificationRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
@@ -13,9 +18,11 @@ import static ru.videoplatform.bot.handler.CommandHandler.TelegramData;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BotService {
 
     private final List<CommandHandler> allHandlers;
+    private final TelegramClient telegramClient;
 
     public BotApiMethod<?> processTelegramEvent(String systemToken, Update update, StudentRequestDto dto) {
         var telegramData = parseTelegramData(update);
@@ -31,6 +38,20 @@ public class BotService {
                         parseTelegramData(update),
                         dto))
                 .orElse(null);
+    }
+
+    @Async
+    public void sendNotificationTelegramBot(BotNotificationRequestDto dto) {
+        var message = SendMessage.builder()
+                .chatId(dto.chatId())
+                .text(dto.message())
+                .build();
+
+        try {
+            telegramClient.execute(message);
+        } catch (Exception e) {
+            log.debug("Ошибка отправки уведомления в Telegram");
+        }
     }
 
     private TelegramData parseTelegramData(Update update) {
