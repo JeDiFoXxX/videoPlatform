@@ -3,6 +3,18 @@
   "enabled": true,
   "displayName": "Video Platform",
   "registrationAllowed": false,
+  "clientScopeMappings": {
+    "realm-management": [
+      {
+        "client": "api-gateway-client",
+        "roles": [
+          "query-users",
+          "view-users",
+          "manage-users"
+        ]
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "pc-client",
@@ -31,16 +43,6 @@
       }
     }
   ],
-  "roles": {
-    "realm": [
-      {
-        "name": "ROLE_TEACHER"
-      },
-      {
-        "name": "ROLE_STUDENT"
-      }
-    ]
-  },
   "users": [
     {
       "username": "service-account-api-gateway-client",
@@ -49,7 +51,8 @@
       "clientRoles": {
         "realm-management": [
           "query-users",
-          "view-users"
+          "view-users",
+          "manage-users"
         ],
         "api-gateway-client": [
           "uma_protection"
