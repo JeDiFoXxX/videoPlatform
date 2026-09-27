@@ -12,7 +12,6 @@ import ru.videoplatform.bot.exception.BotTelegramException;
 import ru.videoplatform.bot.factory.KeyboardFactory;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Component
 @Order(1)
@@ -50,8 +49,7 @@ public class SelectDayHandler implements CommandHandler {
                     .replyMarkup(keyboardFactory.createAvailableSlotsKeyboard(availableSlots))
                     .build();
         } catch (FeignException ex) {
-            throw new BotTelegramException(ex.contentUTF8(),
-                    message.getChatId(), message.getMessageId());
+            throw new BotTelegramException(ex.contentUTF8(), message.getChatId(), message.getMessageId());
         }
     }
 }

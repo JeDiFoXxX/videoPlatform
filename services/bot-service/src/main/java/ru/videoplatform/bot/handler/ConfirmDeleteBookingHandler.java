@@ -37,8 +37,7 @@ public class ConfirmDeleteBookingHandler implements CommandHandler {
                     .text("✅ Ваш урок успешно отменен.")
                     .build();
         } catch (FeignException ex) {
-            throw new BotTelegramException(ex.contentUTF8(),
-                    message.getChatId(), message.getMessageId());
+            throw new BotTelegramException(ex.contentUTF8(), message.getChatId(), message.getMessageId());
         }
     }
 }

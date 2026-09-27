@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import tools.jackson.databind.ObjectMapper;
 
@@ -27,12 +28,12 @@ public class BotGlobalExceptionHandler {
             log.debug("Не удалось распарсить JSON ошибки Telegram");
         }
 
-        var editMessage = EditMessageText.builder()
-                .chatId(ex.getChatId())
-                .messageId(ex.getMessageId())
-                .text("⚠️ " + exMessage)
-                .build();
+        var responseBody = (ex.getMessageId() == 0)
+                ? SendMessage.builder().chatId(ex.getChatId())
+                .text("⚠️ " + exMessage).build()
+                : EditMessageText.builder().chatId(ex.getChatId())
+                .messageId(ex.getMessageId()).text("⚠️ " + exMessage).build();
 
-        return ResponseEntity.ok(editMessage);
+        return ResponseEntity.ok(responseBody);
     }
 }

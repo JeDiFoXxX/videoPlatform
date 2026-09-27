@@ -44,8 +44,7 @@ public class SelectDeleteBookingHandler implements CommandHandler {
                     .build();
 
         } catch (FeignException ex) {
-            throw new BotTelegramException(ex.contentUTF8(),
-                    message.getChatId(), message.getMessageId());
+            throw new BotTelegramException(ex.contentUTF8(), message.getChatId(), 0);
         }
     }
 }

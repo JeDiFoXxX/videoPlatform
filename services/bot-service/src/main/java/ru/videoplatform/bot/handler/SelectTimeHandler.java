@@ -42,8 +42,7 @@ public class SelectTimeHandler implements CommandHandler {
                     .text("✅ Вы успешно записались на занятие!")
                     .build();
         } catch (FeignException ex) {
-            throw new BotTelegramException(ex.contentUTF8(),
-                    message.getChatId(), message.getMessageId());
+            throw new BotTelegramException(ex.contentUTF8(), message.getChatId(), message.getMessageId());
         }
     }
 }
