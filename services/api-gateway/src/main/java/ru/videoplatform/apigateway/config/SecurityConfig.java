@@ -2,8 +2,6 @@ package ru.videoplatform.apigateway.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
-import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +12,7 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import reactor.core.publisher.Mono;
-import ru.videoplatform.apigateway.config.filter.TelegramAuthFilter;
-import ru.videoplatform.apigateway.config.filter.TelegramIdParserFilter;
+import ru.videoplatform.apigateway.config.filter.*;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -24,15 +21,12 @@ public class SecurityConfig {
 
     private final TelegramIdParserFilter telegramIdParserFilter;
     private final TelegramAuthFilter telegramAuthFilter;
+    private final TelegramStartFilter telegramStartFilter;
+    private final TelegramUserEnrichmentFilter telegramUserEnrichmentFilter;
+    private final TelegramRateLimitFilter telegramRateLimitFilter;
 
     @Value("${telegram.secret-token}")
     private String telegramToken;
-
-    @Value("${gateway.rate-limit.capacity}")
-    private int rateLimitCapacity;
-
-    @Value("${gateway.rate-limit.refill-per-minute}")
-    private int rateLimitRefill;
 
     @Value("${services.signaling-service.uri}")
     private String signalingServiceUri;
@@ -53,9 +47,8 @@ public class SecurityConfig {
                             var exchange = context.getExchange();
                             var incomingSecret = exchange.getRequest().getHeaders()
                                     .getFirst("X-Telegram-Bot-Api-Secret-Token");
-                            return Mono.just(new AuthorizationDecision(
-                                    telegramToken.equals(incomingSecret))
-                            );
+                            boolean isValid = telegramToken.equals(incomingSecret);
+                            return Mono.just(new AuthorizationDecision(isValid));
                         })
                         .pathMatchers("/bookings/**", "/ws/**").authenticated()
                         .anyExchange().denyAll()
@@ -65,9 +58,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public RouteLocator customRouteLocator(RouteLocatorBuilder builder,
-                                           RedisRateLimiter customRateLimiter,
-                                           KeyResolver smartKeyResolver) {
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("bot-service", route -> route
                         .path("/**/event")
@@ -75,10 +66,10 @@ public class SecurityConfig {
                         .filters(filter -> filter
                                 .cacheRequestBody(String.class)
                                 .filter(telegramIdParserFilter.apply())
+                                .filter(telegramRateLimitFilter.apply())
                                 .filter(telegramAuthFilter.apply())
-                                .requestRateLimiter(config -> config
-                                        .setRateLimiter(customRateLimiter)
-                                        .setKeyResolver(smartKeyResolver)))
+                                .filter(telegramStartFilter.apply())
+                                .filter(telegramUserEnrichmentFilter.apply()))
                         .uri(botServiceUri))
                 .route("booking-service", route -> route
                         .path("/bookings/**")
@@ -89,21 +80,5 @@ public class SecurityConfig {
                         .and().method("GET")
                         .uri(signalingServiceUri))
                 .build();
-    }
-
-    @Bean
-    public KeyResolver smartKeyResolver() {
-        return exchange -> {
-            if (exchange.getAttribute("extractedTgId") instanceof String telegramId) {
-                return Mono.just(telegramId);
-            }
-            return Mono.empty();
-        };
-    }
-
-    @Bean
-    public RedisRateLimiter customRateLimiter() {
-        int replenishRatePerSecond = Math.max(1, rateLimitRefill / 60);
-        return new RedisRateLimiter(replenishRatePerSecond, rateLimitCapacity);
     }
 }

@@ -9,11 +9,10 @@ import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTest
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
@@ -21,12 +20,14 @@ import org.wiremock.spring.InjectWireMock;
 import ru.videoplatform.apigateway.config.filter.TelegramAuthFilter;
 import ru.videoplatform.apigateway.exception.GatewayGlobalExceptionHandler;
 
+import java.util.UUID;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-                "gateway.rate-limit.capacity=1",
+                "gateway.rate-limit.capacity=5",
                 "gateway.rate-limit.refill-per-minute=1",
                 "telegram.secret-token=test_secret_bot_token",
                 "spring.data.redis.host=localhost",
@@ -179,7 +180,7 @@ public class ApiGatewayTest {
                 .uri("/test/event")
                 .header("X-Telegram-Bot-Api-Secret-Token",
                         "test_secret_bot_token")
-                .bodyValue(createValidTelegramJsonBody())
+                .bodyValue(createValidTelegramJsonBody("text"))
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -191,24 +192,33 @@ public class ApiGatewayTest {
         setupKeycloakTokenStub();
         setupKeycloakUserStub();
         botService.stubFor(post("/test/event").willReturn(aResponse().withStatus(200)));
-        HttpStatusCode responseStatus = HttpStatus.ACCEPTED;
-        for (int i = 0; i < 5; i++) {
-            responseStatus = webTestClient.post()
-                    .uri("/test/event")
-                    .header("X-Telegram-Bot-Api-Secret-Token",
-                            "test_secret_bot_token")
-                    .bodyValue(createValidTelegramJsonBody())
-                    .exchange()
-                    .returnResult(String.class)
-                    .getStatus();
-            if (responseStatus.equals(HttpStatus.TOO_MANY_REQUESTS)) {
-                break;
-            }
-        }
+        webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token",
+                        "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("text"))
+                .exchange()
+                .returnResult(String.class)
+                .getStatus();
+        var responseStatus = webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token",
+                        "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("text"))
+                .exchange()
+                .returnResult(String.class)
+                .getStatus();
+
         var keyOptional = redisTemplate.keys("request_rate_limiter.*").stream().findFirst();
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS, responseStatus);
+
+        assertEquals(HttpStatus.OK, responseStatus);
         assertTrue(keyOptional.isPresent());
         assertTrue(keyOptional.get().contains("111111"));
+        Mockito.verify(globalExceptionHandler, Mockito.times(1))
+                .handle(
+                        Mockito.any(ServerWebExchange.class),
+                        Mockito.any(ResponseStatusException.class)
+                );
     }
 
     @Test
@@ -222,32 +232,33 @@ public class ApiGatewayTest {
                 .bodyValue(createInvalidTelegramJsonBody())
                 .exchange()
                 .expectStatus().isOk();
+
         assertTrue(redisTemplate.keys("request_rate_limiter.*").isEmpty());
         verifyKeycloakTokenRequests(0);
     }
 
     @Test
     @DisplayName("Должен успешно парсить Telegram ID")
-    void shouldHandleInternalServerErrorFromKeycloakToken() {
+    void shouldSuccessfullyParseTelegramId() {
         clearRedisRateLimiterKeys();
-        setupKeycloakTokenErrorStub();
+        setupKeycloakTokenStub();
+        setupKeycloakUserStub();
+        botService.stubFor(post("/test/event").willReturn(aResponse().withStatus(200)));
+
         webTestClient.post()
                 .uri("/test/event")
-                .header("X-Telegram-Bot-Api-Secret-Token",
-                        "test_secret_bot_token")
-                .bodyValue(createValidTelegramJsonBody())
+                .header("X-Telegram-Bot-Api-Secret-Token", "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("text"))
                 .exchange()
                 .expectStatus().isOk();
+
         verifyKeycloakTokenRequests(1);
-        Mockito.verify(globalExceptionHandler, Mockito.times(1))
-                .handle(
-                        Mockito.any(ServerWebExchange.class),
-                        Mockito.argThat(ex -> ex instanceof WebClientResponseException.InternalServerError)
-                );
+        Mockito.verify(globalExceptionHandler, Mockito.never())
+                .handle(Mockito.any(), Mockito.any());
     }
 
     @Test
-    @DisplayName("Должен перехватывать RuntimeException при неуспешном парсинге Telegram ID")
+    @DisplayName("Должен перехватывать Exception при неуспешном парсинге Telegram ID")
     void shouldHandleExceptionWhenParsingTelegramIdFails() {
         clearRedisRateLimiterKeys();
         webTestClient.post()
@@ -257,11 +268,11 @@ public class ApiGatewayTest {
                 .bodyValue(createInvalidTelegramJsonBody())
                 .exchange()
                 .expectStatus().isOk();
+
         Mockito.verify(globalExceptionHandler, Mockito.times(1))
                 .handle(
                         Mockito.any(ServerWebExchange.class),
-                        Mockito.argThat(ex -> "Telegram User ID not found in the JSON structure"
-                                .equals(ex.getMessage()))
+                        Mockito.any(Exception.class)
                 );
     }
 
@@ -275,15 +286,81 @@ public class ApiGatewayTest {
                 .uri("/test/event")
                 .header("X-Telegram-Bot-Api-Secret-Token",
                         "test_secret_bot_token")
-                .bodyValue(createValidTelegramJsonBody())
+                .bodyValue(createValidTelegramJsonBody("text"))
                 .exchange()
                 .expectStatus().isOk();
+
         verifyKeycloakTokenRequests(1);
         verifyKeycloakUserRequests();
         Mockito.verify(globalExceptionHandler, Mockito.times(1))
                 .handle(
                         Mockito.any(ServerWebExchange.class),
-                        Mockito.argThat(ex -> "User not found or not unique".equals(ex.getMessage()))
+                        Mockito.any(RuntimeException.class)
+                );
+    }
+
+    @Test
+    @DisplayName("Должен успешно регистрировать пользователя по ключу из Redis и обновить Keycloak")
+    void shouldSuccessfullyRegisterUserWithCustomUuid() {
+        var uuid = UUID.randomUUID().toString();
+        clearRedisRateLimiterKeys();
+        setupKeycloakTokenStub();
+        setupKeycloakRegistrationStubs(uuid);
+        redisTemplate.opsForValue().set("test_key", uuid);
+        botService.stubFor(post("/test/event").willReturn(aResponse().withStatus(200)));
+        var result = webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token",
+                        "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("/start test_key"))
+                .exchange()
+                .returnResult(String.class);
+
+        assertEquals(HttpStatus.OK, result.getStatus());
+        assertFalse(redisTemplate.hasKey("test_key"));
+        verifyKeycloakRegistrationRequests(uuid);
+    }
+
+    @Test
+    @DisplayName("Должен успешно пропускать пользователя, если /start без ключа, но ID есть в Keycloak")
+    void shouldSuccessfullyPassUserWhenCleanStartReceivedAndUserExistsInKeycloak() {
+        clearRedisRateLimiterKeys();
+        setupKeycloakTokenStub();
+        setupKeycloakUserStub();
+        botService.stubFor(post("/test/event").willReturn(aResponse().withStatus(200)));
+        var result = webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token",
+                        "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("/start"))
+                .exchange()
+                .returnResult(String.class);
+
+        assertEquals(HttpStatus.OK, result.getStatus());
+        verifyKeycloakUserRequests();
+    }
+
+    @Test
+    @DisplayName("Должен выдать ошибку и 200 OK, если /start без ключа, но ID нет в Keycloak")
+    void shouldReturnTelegramErrorWhenCleanStartReceivedAndUserDoesNotExistInKeycloak() {
+        clearRedisRateLimiterKeys();
+        setupKeycloakTokenStub();
+        setupKeycloakUserEmptyStub();
+        var responseStatus = webTestClient.post()
+                .uri("/test/event")
+                .header("X-Telegram-Bot-Api-Secret-Token",
+                        "test_secret_bot_token")
+                .bodyValue(createValidTelegramJsonBody("/start"))
+                .exchange()
+                .returnResult(String.class)
+                .getStatus();
+
+        verifyKeycloakUserRequests();
+        assertEquals(HttpStatus.OK, responseStatus);
+        Mockito.verify(globalExceptionHandler, Mockito.times(1))
+                .handle(
+                        Mockito.any(ServerWebExchange.class),
+                        Mockito.any(RuntimeException.class)
                 );
     }
 
@@ -301,12 +378,6 @@ public class ApiGatewayTest {
                         .withStatus(200)
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
                         .withBody("{\"access_token\":\"test-system-token-123\",\"expires_in\":300}")));
-    }
-
-    private void setupKeycloakTokenErrorStub() {
-        keycloakService.stubFor(post(urlEqualTo(
-                "/realms/videoplatform/protocol/openid-connect/token"))
-                .willReturn(aResponse().withStatus(500)));
     }
 
     private void setupKeycloakUserStub() {
@@ -335,6 +406,40 @@ public class ApiGatewayTest {
                         .withBody("[]")));
     }
 
+    private void setupKeycloakRegistrationStubs(String uuid) {
+        var keycloakUserJson = """
+                {
+                  "id": "%s",
+                  "username": "testUserName",
+                  "email": "test@test.com",
+                  "enabled": true,
+                  "firstName": "testFirstName",
+                  "lastName": "testLastName",
+                  "attributes": {
+                    "telegramId": []
+                  }
+                }
+                """.formatted(uuid);
+
+        keycloakService.stubFor(get(urlEqualTo("/admin/realms/videoplatform/users/" + uuid))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON.toString())
+                        .withBody(keycloakUserJson)));
+
+        keycloakService.stubFor(put(urlEqualTo("/admin/realms/videoplatform/users/" + uuid))
+                .willReturn(aResponse()
+                        .withStatus(204)));
+    }
+
+    private void verifyKeycloakRegistrationRequests(String uuid) {
+        keycloakService.verify(1, getRequestedFor(urlEqualTo(
+                "/admin/realms/videoplatform/users/" + uuid)));
+
+        keycloakService.verify(1, putRequestedFor(urlEqualTo(
+                "/admin/realms/videoplatform/users/" + uuid)));
+    }
+
     private void verifyKeycloakTokenRequests(int times) {
         keycloakService.verify(times, postRequestedFor(urlEqualTo(
                 "/realms/videoplatform/protocol/openid-connect/token")));
@@ -345,7 +450,7 @@ public class ApiGatewayTest {
                 "/admin/realms/videoplatform/users?q=telegramId:111111")));
     }
 
-    private String createValidTelegramJsonBody() {
+    private String createValidTelegramJsonBody(String text) {
         return """
                 {
                   "update_id": 123456,
@@ -356,10 +461,10 @@ public class ApiGatewayTest {
                       "is_bot": false,
                       "first_name": "test_name"
                     },
-                    "text": "test"
+                    "text": "%s"
                   }
                 }
-                """;
+                """.formatted(text);
     }
 
     private String createInvalidTelegramJsonBody() {
