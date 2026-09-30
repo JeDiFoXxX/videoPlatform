@@ -50,7 +50,7 @@ public class TelegramStartFilter {
                         return getUserIdFromRedis(redisKey)
                                 .flatMap(userId -> getUserFromKeycloak(userId, systemToken))
                                 .flatMap(user -> saveTelegramIdToKeycloak(user, systemToken, telegramId))
-                                .then(redisTemplate.opsForValue().delete(redisKey))
+                                .then(deleteUserIdFromRedis(redisKey))
                                 .then();
                     })
                     .then(Mono.defer(() -> chain.filter(exchange)));
@@ -60,6 +60,10 @@ public class TelegramStartFilter {
     private Mono<String> getUserIdFromRedis(String redisKey) {
         return redisTemplate.opsForValue().get(redisKey)
                 .switchIfEmpty(Mono.error(RuntimeException::new));
+    }
+
+    private Mono<Void> deleteUserIdFromRedis(String redisKey) {
+        return redisTemplate.opsForValue().delete(redisKey).then();
     }
 
     private Mono<KeycloakUserResponse> getUserFromKeycloak(String userId, String systemToken) {
