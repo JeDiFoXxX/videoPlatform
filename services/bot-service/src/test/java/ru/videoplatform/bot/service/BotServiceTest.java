@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -35,11 +36,17 @@ class BotServiceTest {
     @Mock
     private TelegramClient telegramClient;
 
+    @Mock
+    StringRedisTemplate stringRedisTemplate;
+
     private BotService botService;
 
     @BeforeEach
     void setUp() {
-        botService = new BotService(List.of(messageHandler, callbackHandler), telegramClient);
+        botService = new BotService(
+                stringRedisTemplate,
+                telegramClient,
+                List.of(messageHandler, callbackHandler));
     }
 
     @Test

@@ -2,7 +2,10 @@ package ru.videoplatform.bot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.videoplatform.bot.dto.BotNotificationRequestDto;
@@ -10,6 +13,7 @@ import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.service.BotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,5 +47,13 @@ public class BotController {
             @RequestBody BotNotificationRequestDto dto) {
         botService.sendNotificationTelegramBot(dto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/qr")
+    public ResponseEntity<Map<String, String>> createKeyForQrCode(
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(botService.createKeyForQrCode(jwt.getSubject()));
     }
 }

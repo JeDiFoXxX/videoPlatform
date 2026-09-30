@@ -2,6 +2,7 @@ package ru.videoplatform.bot.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
@@ -12,7 +13,10 @@ import ru.videoplatform.bot.dto.BotNotificationRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static ru.videoplatform.bot.handler.CommandHandler.TelegramData;
 
@@ -21,8 +25,9 @@ import static ru.videoplatform.bot.handler.CommandHandler.TelegramData;
 @Slf4j
 public class BotService {
 
-    private final List<CommandHandler> allHandlers;
+    private final StringRedisTemplate stringRedisTemplate;
     private final TelegramClient telegramClient;
+    private final List<CommandHandler> allHandlers;
 
     public BotApiMethod<?> processTelegramEvent(String systemToken, Update update, StudentRequestDto dto) {
         var telegramData = parseTelegramData(update);
@@ -52,6 +57,12 @@ public class BotService {
         } catch (Exception e) {
             log.debug("Ошибка отправки уведомления в Telegram");
         }
+    }
+
+    public Map<String, String> createKeyForQrCode(String uuid) {
+        var key = UUID.randomUUID().toString().split("-")[0];
+        stringRedisTemplate.opsForValue().set(key, uuid, Duration.ofMinutes(5));
+        return Map.of("key", key);
     }
 
     private TelegramData parseTelegramData(Update update) {
