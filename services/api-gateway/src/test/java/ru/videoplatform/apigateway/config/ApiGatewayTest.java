@@ -113,6 +113,10 @@ public class ApiGatewayTest {
                 .uri("/ws/test")
                 .exchange()
                 .expectStatus().isUnauthorized();
+        webTestClient.get()
+                .uri("/test/qr")
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 
     @Test
@@ -125,6 +129,8 @@ public class ApiGatewayTest {
                 willReturn(aResponse().withStatus(200)));
         signalingService.stubFor(get("/ws/test")
                 .willReturn(aResponse().withStatus(200)));
+        botService.stubFor(get("/test/qr")
+                .willReturn(aResponse().withStatus(200)));
 
         webTestClient.post()
                 .uri("/bookings/test")
@@ -136,6 +142,10 @@ public class ApiGatewayTest {
                 .expectStatus().isOk();
         webTestClient.get()
                 .uri("/ws/test")
+                .exchange()
+                .expectStatus().isOk();
+        webTestClient.get()
+                .uri("/test/qr")
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -157,6 +167,10 @@ public class ApiGatewayTest {
                 .expectStatus().isOk();
         webTestClient.post()
                 .uri("/ws/test")
+                .exchange()
+                .expectStatus().isNotFound();
+        webTestClient.post()
+                .uri("/test/qr")
                 .exchange()
                 .expectStatus().isNotFound();
     }

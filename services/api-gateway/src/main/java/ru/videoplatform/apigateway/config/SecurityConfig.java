@@ -50,7 +50,7 @@ public class SecurityConfig {
                             boolean isValid = telegramToken.equals(incomingSecret);
                             return Mono.just(new AuthorizationDecision(isValid));
                         })
-                        .pathMatchers("/bookings/**", "/ws/**").authenticated()
+                        .pathMatchers("/**/qr", "/bookings/**", "/ws/**").authenticated()
                         .anyExchange().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
@@ -70,6 +70,10 @@ public class SecurityConfig {
                                 .filter(telegramAuthFilter.apply())
                                 .filter(telegramStartFilter.apply())
                                 .filter(telegramUserEnrichmentFilter.apply()))
+                        .uri(botServiceUri))
+                .route("bot-qr-service", route -> route
+                        .path("/**/qr")
+                        .and().method("GET")
                         .uri(botServiceUri))
                 .route("booking-service", route -> route
                         .path("/bookings/**")
