@@ -54,9 +54,7 @@ public class BotService {
 
         try {
             telegramClient.execute(message);
-        } catch (Exception e) {
-            log.debug("Ошибка отправки уведомления в Telegram");
-        }
+        } catch (Exception ignored) { }
     }
 
     public Map<String, String> createKeyForQrCode(String uuid) {

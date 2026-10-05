@@ -24,9 +24,7 @@ public class BotGlobalExceptionHandler {
             if (jsonNode != null && jsonNode.has("message")) {
                 exMessage = jsonNode.get("message").asString();
             }
-        } catch (Exception ignore) {
-            log.debug("Не удалось распарсить JSON ошибки Telegram");
-        }
+        } catch (Exception ignored) { }
 
         var responseBody = (ex.getMessageId() == 0)
                 ? SendMessage.builder().chatId(ex.getChatId())

@@ -20,17 +20,13 @@ public class AsyncNotificationService {
     public void createNotificationAsync(String systemToken, NotificationRequestDto requestDto) {
         try {
             notificationClient.createNotification(systemToken, requestDto);
-        } catch (Exception ignore) {
-            log.debug("Ошибка создания уведомления");
-        }
+        } catch (Exception ignored) { }
     }
 
     @Async
     public void deleteNotificationAsync(String systemToken, UUID bookingId) {
         try {
             notificationClient.deleteNotification(systemToken, bookingId);
-        } catch (Exception ignore) {
-            log.debug("Ошибка удаления уведомления");
-        }
+        } catch (Exception ignored) { }
     }
 }
