@@ -8,7 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import ru.videoplatform.bot.dto.BotNotificationRequestDto;
+import ru.videoplatform.bot.dto.NotificationBotRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.service.BotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +44,7 @@ public class BotController {
 
     @PostMapping("/execute")
     public ResponseEntity<?> sendNotificationTelegramBot(
-            @RequestBody BotNotificationRequestDto dto) {
+            @RequestBody NotificationBotRequestDto dto) {
         botService.sendNotificationTelegramBot(dto);
         return ResponseEntity.ok().build();
     }

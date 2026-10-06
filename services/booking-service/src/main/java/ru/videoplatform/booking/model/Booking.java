@@ -24,6 +24,12 @@ public class Booking {
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
     @Column(name = "start_time", nullable = false)
     private Instant startTime;
 

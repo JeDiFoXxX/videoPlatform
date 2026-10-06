@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.videoplatform.notification.client.BotClient;
-import ru.videoplatform.notification.dto.BotNotificationRequestDto;
+import ru.videoplatform.notification.dto.NotificationBotRequestDto;
 import ru.videoplatform.notification.service.NotificationService;
 
 import java.time.Instant;
@@ -57,7 +57,7 @@ public class NotificationScheduler {
                             timeFormatter.format(notification.getEndTime())
                     ));
 
-                    var requestDto = new BotNotificationRequestDto(
+                    var requestDto = new NotificationBotRequestDto(
                             notification.getChatId(),
                             message.toString()
                     );

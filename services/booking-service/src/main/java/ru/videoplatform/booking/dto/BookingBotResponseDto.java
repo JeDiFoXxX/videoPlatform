@@ -5,10 +5,10 @@ import ru.videoplatform.booking.model.Booking;
 import java.time.Instant;
 import java.util.UUID;
 
-public record BookingResponseDto(UUID bookingId, Instant startTime, Instant endTime) {
+public record BookingBotResponseDto(UUID bookingId, Instant startTime, Instant endTime) {
 
-    public static BookingResponseDto from(Booking booking) {
-        return new BookingResponseDto(
+    public static BookingBotResponseDto from(Booking booking) {
+        return new BookingBotResponseDto(
                 booking.getId(),
                 booking.getStartTime(),
                 booking.getEndTime()

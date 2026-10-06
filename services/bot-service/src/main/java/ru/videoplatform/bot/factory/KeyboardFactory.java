@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.videoplatform.bot.dto.BookingResponseDto;
+import ru.videoplatform.bot.dto.BookingBotResponseDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
 import java.time.Instant;
@@ -109,10 +109,10 @@ public class KeyboardFactory {
                 .build();
     }
 
-    public InlineKeyboardMarkup createActiveBookingKeyboard(List<BookingResponseDto> activeBooking) {
+    public InlineKeyboardMarkup createActiveBookingKeyboard(List<BookingBotResponseDto> activeBooking) {
         List<InlineKeyboardRow> rows = new ArrayList<>();
         var builder = new StringBuilder();
-        for (BookingResponseDto booking : activeBooking) {
+        for (BookingBotResponseDto booking : activeBooking) {
             var dateParts = dayFormatter.format(booking.startTime()).split(" ");
             builder.setLength(0);
             builder.append(dateParts[0].toUpperCase())

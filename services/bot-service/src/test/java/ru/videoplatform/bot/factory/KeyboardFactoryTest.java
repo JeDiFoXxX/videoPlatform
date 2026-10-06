@@ -2,7 +2,7 @@ package ru.videoplatform.bot.factory;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import ru.videoplatform.bot.dto.BookingResponseDto;
+import ru.videoplatform.bot.dto.BookingBotResponseDto;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -77,7 +77,7 @@ class KeyboardFactoryTest {
     @DisplayName("Должен выводить ID брони с префиксом confirm_delete:")
     void shouldCreateActiveBookingKeyboardWithBookingId() {
         var bookingId = UUID.randomUUID();
-        var booking = new BookingResponseDto(
+        var booking = new BookingBotResponseDto(
                 bookingId,
                 Instant.parse("2026-10-15T14:00:00Z"),
                 Instant.parse("2026-10-15T15:00:00Z"));

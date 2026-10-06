@@ -2,7 +2,7 @@ package ru.videoplatform.booking.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
-import ru.videoplatform.booking.dto.NotificationRequestDto;
+import ru.videoplatform.booking.dto.BookingNotificationRequestDto;
 
 import java.util.UUID;
 
@@ -15,7 +15,7 @@ public interface NotificationClient {
     @PostMapping("/create")
     void createNotification(
             @RequestHeader("Authorization") String systemToken,
-            @RequestBody NotificationRequestDto requestDto);
+            @RequestBody BookingNotificationRequestDto requestDto);
 
     @DeleteMapping("/delete")
     void deleteNotification(

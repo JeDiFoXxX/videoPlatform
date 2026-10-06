@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import ru.videoplatform.booking.client.NotificationClient;
-import ru.videoplatform.booking.dto.NotificationRequestDto;
+import ru.videoplatform.booking.dto.BookingNotificationRequestDto;
 
 import java.util.UUID;
 
@@ -17,7 +17,7 @@ public class AsyncNotificationService {
     private final NotificationClient notificationClient;
 
     @Async
-    public void createNotificationAsync(String systemToken, NotificationRequestDto requestDto) {
+    public void createNotificationAsync(String systemToken, BookingNotificationRequestDto requestDto) {
         try {
             notificationClient.createNotification(systemToken, requestDto);
         } catch (Exception ignored) { }

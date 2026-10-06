@@ -3,7 +3,7 @@ package ru.videoplatform.notification.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.videoplatform.notification.dto.NotificationRequestDto;
+import ru.videoplatform.notification.dto.BookingNotificationRequestDto;
 import ru.videoplatform.notification.model.Notification;
 import ru.videoplatform.notification.repository.NotificationRepository;
 
@@ -18,7 +18,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public void createNotification(NotificationRequestDto dto) {
+    public void createNotification(BookingNotificationRequestDto dto) {
         notificationRepository.save(Notification.from(dto));
     }
 

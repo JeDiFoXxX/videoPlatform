@@ -3,7 +3,7 @@ package ru.videoplatform.notification.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.videoplatform.notification.dto.NotificationRequestDto;
+import ru.videoplatform.notification.dto.BookingNotificationRequestDto;
 import ru.videoplatform.notification.service.NotificationService;
 
 import java.util.UUID;
@@ -17,7 +17,7 @@ public class NotificationController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createNotification(
-            @RequestBody NotificationRequestDto requestDto) {
+            @RequestBody BookingNotificationRequestDto requestDto) {
         notificationService.createNotification(requestDto);
         return ResponseEntity.ok().build();
     }

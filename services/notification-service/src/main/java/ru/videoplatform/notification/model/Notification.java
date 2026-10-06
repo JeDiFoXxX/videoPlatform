@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ru.videoplatform.notification.dto.NotificationRequestDto;
+import ru.videoplatform.notification.dto.BookingNotificationRequestDto;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -35,7 +35,7 @@ public class Notification {
     @Column(name = "end_time", nullable = false)
     private Instant endTime;
 
-    public static Notification from(NotificationRequestDto dto) {
+    public static Notification from(BookingNotificationRequestDto dto) {
         return new Notification(
                 null,
                 dto.chatId(),

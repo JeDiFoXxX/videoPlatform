@@ -12,7 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.videoplatform.booking.dto.BookingRequestDto;
+import ru.videoplatform.booking.dto.BookingCalendarRequestDto;
+import ru.videoplatform.booking.dto.BotBookingRequestDto;
 import ru.videoplatform.booking.exception.SlotConflictException;
 import ru.videoplatform.booking.model.Booking;
 import ru.videoplatform.booking.model.BookingStatus;
@@ -33,7 +34,7 @@ class BookingServiceTest {
     @InjectMocks
     private BookingService bookingService;
 
-    private BookingRequestDto validDto;
+    private BotBookingRequestDto validDto;
     private Instant baseTime;
     private UUID studentId;
     private UUID bookingId;
@@ -44,7 +45,7 @@ class BookingServiceTest {
         bookingId = UUID.randomUUID();
         baseTime = Instant.now().truncatedTo(ChronoUnit.HOURS);
 
-        validDto = new BookingRequestDto(
+        validDto = new BotBookingRequestDto(
                 12345L,
                 studentId,
                 "test_first_name",
@@ -189,5 +190,21 @@ class BookingServiceTest {
                 exception.getMessage());
         verify(bookingRepository, times(1)).findByStatusAndId(any(), any());
         verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Должен вернуть список бронирований для календаря по заданным фильтрам")
+    void shouldReturnCalendarBookingsWhenValidRequest() {
+        given(bookingRepository
+                .findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any()))
+                .willReturn(List.of(validDto.toEntity()));
+
+        var request = new BookingCalendarRequestDto(anyList(), any(), any());
+        var response = bookingService.getCalendarBookings(request);
+
+        assertNotNull(response);
+        assertEquals("test_first_name", response.getFirst().firstName());
+        verify(bookingRepository, times(1))
+                .findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any());
     }
 }

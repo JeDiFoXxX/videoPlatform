@@ -9,7 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
-import ru.videoplatform.bot.dto.BotNotificationRequestDto;
+import ru.videoplatform.bot.dto.NotificationBotRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
@@ -46,7 +46,7 @@ public class BotService {
     }
 
     @Async
-    public void sendNotificationTelegramBot(BotNotificationRequestDto dto) {
+    public void sendNotificationTelegramBot(NotificationBotRequestDto dto) {
         var message = SendMessage.builder()
                 .chatId(dto.chatId())
                 .text(dto.message())

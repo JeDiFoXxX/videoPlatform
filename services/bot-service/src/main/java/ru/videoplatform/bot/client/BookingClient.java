@@ -2,8 +2,8 @@ package ru.videoplatform.bot.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
-import ru.videoplatform.bot.dto.BookingRequestDto;
-import ru.videoplatform.bot.dto.BookingResponseDto;
+import ru.videoplatform.bot.dto.BotBookingRequestDto;
+import ru.videoplatform.bot.dto.BookingBotResponseDto;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,9 +16,9 @@ import java.util.UUID;
 public interface BookingClient {
 
     @PostMapping("/create")
-    BookingResponseDto createBooking(
+    BookingBotResponseDto createBooking(
             @RequestHeader("Authorization") String systemToken,
-            @RequestBody BookingRequestDto requestDto
+            @RequestBody BotBookingRequestDto requestDto
     );
 
     @GetMapping("/slots")
@@ -28,13 +28,13 @@ public interface BookingClient {
     );
 
     @GetMapping("/active")
-    List<BookingResponseDto> getActiveBooking(
+    List<BookingBotResponseDto> getActiveBooking(
             @RequestHeader("Authorization") String systemToken,
             @RequestParam("studentId") UUID studentId
     );
 
     @DeleteMapping("/delete")
-    BookingResponseDto deleteBooking(
+    BookingBotResponseDto deleteBooking(
             @RequestHeader("Authorization") String systemToken,
             @RequestParam("bookingId") UUID bookingId
     );

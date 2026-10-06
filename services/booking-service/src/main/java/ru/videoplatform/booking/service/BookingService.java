@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import ru.videoplatform.booking.dto.BookingRequestDto;
-import ru.videoplatform.booking.dto.BookingResponseDto;
+import ru.videoplatform.booking.dto.BookingCalendarRequestDto;
+import ru.videoplatform.booking.dto.BookingCalendarResponseDto;
+import ru.videoplatform.booking.dto.BotBookingRequestDto;
+import ru.videoplatform.booking.dto.BookingBotResponseDto;
 import ru.videoplatform.booking.exception.SlotConflictException;
 import ru.videoplatform.booking.model.Booking;
 import ru.videoplatform.booking.model.BookingStatus;
@@ -24,7 +26,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
 
     @Transactional
-    public BookingResponseDto createBooking(BookingRequestDto dto) {
+    public BookingBotResponseDto createBooking(BotBookingRequestDto dto) {
         var validation = bookingRepository.checkStudentBookingsAndIntersections(
                 dto.studentId(), dto.startTime(), dto.endTime()
         );
@@ -39,7 +41,7 @@ public class BookingService {
                     "Данное время уже забронировано. Пожалуйста, выберите другое время.");
         }
 
-        return BookingResponseDto.from(bookingRepository.save(dto.toEntity()));
+        return BookingBotResponseDto.from(bookingRepository.save(dto.toEntity()));
     }
 
     @Transactional
@@ -58,25 +60,34 @@ public class BookingService {
     }
 
     @Transactional
-    public List<BookingResponseDto> getActiveBookings(UUID studentId) {
+    public List<BookingBotResponseDto> getActiveBookings(UUID studentId) {
         var activeBookings = bookingRepository.findByStatusInAndStudentId(
                 List.of(BookingStatus.SCHEDULED),
                 studentId
         );
 
         return activeBookings.stream()
-                .map(BookingResponseDto::from)
+                .map(BookingBotResponseDto::from)
                 .toList();
     }
 
     @Transactional
-    public BookingResponseDto deleteBooking(UUID id) {
+    public List<BookingCalendarResponseDto> getCalendarBookings(BookingCalendarRequestDto dto) {
+        return bookingRepository.findByStatusInAndStartTimeBetweenOrderByStartTimeAsc(
+                        dto.statuses(), dto.from(), dto.to())
+                .stream()
+                .map(BookingCalendarResponseDto::from)
+                .toList();
+    }
+
+    @Transactional
+    public BookingBotResponseDto deleteBooking(UUID id) {
         var activeBooking = bookingRepository.findByStatusAndId(BookingStatus.SCHEDULED, id)
                 .orElseThrow(() -> new SlotConflictException(
                         "Не удалось отменить запись. Похоже, она уже была удалена ранее."));
         var deleteBooking = activeBooking.toBuilder()
                 .status(BookingStatus.CANCELED)
                 .build();
-        return BookingResponseDto.from(bookingRepository.save(deleteBooking));
+        return BookingBotResponseDto.from(bookingRepository.save(deleteBooking));
     }
 }

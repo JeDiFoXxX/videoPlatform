@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import ru.videoplatform.bot.client.BookingClient;
-import ru.videoplatform.bot.dto.BookingRequestDto;
+import ru.videoplatform.bot.dto.BotBookingRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.exception.BotTelegramException;
 
@@ -31,7 +31,7 @@ public class SelectTimeHandler implements CommandHandler {
         var message = data.update().getCallbackQuery().getMessage();
         try {
             bookingClient.createBooking(systemToken,
-                    BookingRequestDto.from(
+                    BotBookingRequestDto.from(
                             dto,
                             message.getChatId(),
                             Instant.parse(timeParts[0]),

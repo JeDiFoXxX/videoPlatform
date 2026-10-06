@@ -41,6 +41,8 @@ class BookingRepositoryTest {
     void shouldGenerateIdWhenBookingIsPersisted() {
         var bookingToSave = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
@@ -55,6 +57,8 @@ class BookingRepositoryTest {
     void shouldDetectOverlapAndCountActiveBookings() {
         var existingBooking = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
@@ -76,6 +80,8 @@ class BookingRepositoryTest {
     void shouldNotDetectOverlapWhenBookingsAreBackToBack() {
         var existingBooking = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime.minus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime)
                 .status(BookingStatus.SCHEDULED)
@@ -96,12 +102,16 @@ class BookingRepositoryTest {
     void shouldThrowExceptionWhenDuplicateStartTime() {
         var firstBookingSignUp = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
         var secondBookingSignUp = Booking.builder()
                 .studentId(UUID.randomUUID())
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
@@ -122,6 +132,8 @@ class BookingRepositoryTest {
     void shouldFindBookingByStatusAndId() {
         var existingBooking = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
@@ -139,12 +151,16 @@ class BookingRepositoryTest {
     void shouldFindScheduledBookingsWithinDayRangeOrderedByStartTimeAsc() {
         var firstExistingBooking = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
         var secondExistingBooking = Booking.builder()
                 .studentId(UUID.randomUUID())
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime.plus(120, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
@@ -169,12 +185,16 @@ class BookingRepositoryTest {
     void shouldFindAllActiveBookingsForSpecificStudent() {
         var studentBooking = Booking.builder()
                 .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime)
                 .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
                 .build();
         var anotherStudentBooking = Booking.builder()
                 .studentId(UUID.randomUUID())
+                .firstName("test_first_name")
+                .lastName("test_last_name")
                 .startTime(baseTime.plus(60, ChronoUnit.MINUTES))
                 .endTime(baseTime.plus(120, ChronoUnit.MINUTES))
                 .status(BookingStatus.SCHEDULED)
