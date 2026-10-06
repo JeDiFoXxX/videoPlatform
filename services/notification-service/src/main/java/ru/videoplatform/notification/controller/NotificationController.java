@@ -17,16 +17,13 @@ public class NotificationController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createNotification(
-            @RequestHeader("Authorization") String systemToken,
             @RequestBody NotificationRequestDto requestDto) {
         notificationService.createNotification(requestDto);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteNotification(
-            @RequestHeader("Authorization") String systemToken,
-            @RequestParam UUID bookingId) {
+    public ResponseEntity<Void> deleteNotification(@RequestParam UUID bookingId) {
         notificationService.deleteNotification(bookingId);
         return ResponseEntity.ok().build();
     }
