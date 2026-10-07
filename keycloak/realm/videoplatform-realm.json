@@ -2,7 +2,7 @@
   "realm": "videoplatform",
   "enabled": true,
   "displayName": "Video Platform",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "clientScopeMappings": {
     "realm-management": [
       {
@@ -20,9 +20,11 @@
       "clientId": "pc-client",
       "enabled": true,
       "publicClient": true,
+      "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "redirectUris": [
-        "http://localhost:3000/*"
+        "http://localhost:3000/*",
+        "https://pstmn.io"
       ],
       "webOrigins": [
         "http://localhost:3000"
@@ -58,6 +60,43 @@
           "uma_protection"
         ]
       }
+    },
+    {
+      "username": "teacher",
+      "enabled": true,
+      "firstName": "Иван",
+      "lastName": "Иванов",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_TEACHER",
+        "offline_access"
+      ]
     }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_TEACHER",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "videoplatform"
+      },
+      {
+        "name": "ROLE_STUDENT",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "videoplatform"
+      }
+    ]
+  },
+  "defaultRoles": [
+    "ROLE_STUDENT"
   ]
 }
