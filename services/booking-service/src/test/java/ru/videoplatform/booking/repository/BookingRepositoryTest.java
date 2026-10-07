@@ -140,7 +140,6 @@ class BookingRepositoryTest {
                 .status(BookingStatus.SCHEDULED)
                 .build();
         var savedBooking = entityManager.persistAndFlush(existingBooking);
-
         var result = bookingRepository.findByStatusAndId(BookingStatus.SCHEDULED, savedBooking.getId());
 
         assertTrue(result.isPresent());
@@ -212,5 +211,31 @@ class BookingRepositoryTest {
 
         assertEquals(1, result.size());
         assertEquals(studentBooking.getId(), result.getFirst().getId());
+    }
+
+    @Test
+    @DisplayName("Должен успешно обновлять статус бронирования по его ID")
+    void shouldUpdateStatusByBookingId() {
+        var booking = Booking.builder()
+                .studentId(studentId)
+                .firstName("test_first_name")
+                .lastName("test_last_name")
+                .startTime(baseTime)
+                .endTime(baseTime.plus(60, ChronoUnit.MINUTES))
+                .status(BookingStatus.SCHEDULED)
+                .build();
+
+        var savedBooking = entityManager.persistAndFlush(booking);
+
+        var bookingId = savedBooking.getId();
+        var newStatus = "FINISHED";
+
+        bookingRepository.updateStatusByBookingId(newStatus, bookingId);
+        entityManager.clear();
+
+        var updatedBooking = entityManager.find(Booking.class, bookingId);
+
+        assertNotNull(updatedBooking);
+        assertEquals(newStatus, updatedBooking.getStatus().name());
     }
 }

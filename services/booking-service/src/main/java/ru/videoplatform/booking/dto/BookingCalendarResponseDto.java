@@ -15,7 +15,7 @@ public record BookingCalendarResponseDto(UUID bookingId, String firstName, Strin
                 booking.getLastName(),
                 booking.getStartTime(),
                 booking.getEndTime(),
-                booking.getStatus().toString()
+                booking.getStatus().name()
         );
     }
 

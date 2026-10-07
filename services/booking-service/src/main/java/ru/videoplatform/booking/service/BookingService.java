@@ -90,4 +90,14 @@ public class BookingService {
                 .build();
         return BookingBotResponseDto.from(bookingRepository.save(deleteBooking));
     }
+
+    @Transactional
+    public void finishBooking(UUID bookingId) {
+        bookingRepository.updateStatusByBookingId(BookingStatus.FINISHED.name(), bookingId);
+    }
+
+    @Transactional
+    public void cancelBooking(UUID bookingId) {
+        bookingRepository.updateStatusByBookingId(BookingStatus.CANCELED.name(), bookingId);
+    }
 }

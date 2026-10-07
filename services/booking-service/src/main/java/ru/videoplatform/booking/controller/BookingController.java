@@ -61,4 +61,18 @@ public class BookingController {
         asyncService.deleteSignalingAsync(systemToken, bookingId);
         return ResponseEntity.ok(deleteBooking);
     }
+
+    @PatchMapping("/finish")
+    public ResponseEntity<Void> finishBooking(
+            @RequestParam("bookingId") UUID bookingId) {
+        bookingService.finishBooking(bookingId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/cancel")
+    public ResponseEntity<Void> cancelBooking(
+            @RequestParam("bookingId") UUID bookingId) {
+        bookingService.cancelBooking(bookingId);
+        return ResponseEntity.ok().build();
+    }
 }
