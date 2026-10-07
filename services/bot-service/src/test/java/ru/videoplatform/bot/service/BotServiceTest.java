@@ -45,7 +45,6 @@ class BotServiceTest {
     void setUp() {
         botService = new BotService(
                 stringRedisTemplate,
-                telegramClient,
                 List.of(messageHandler, callbackHandler));
     }
 

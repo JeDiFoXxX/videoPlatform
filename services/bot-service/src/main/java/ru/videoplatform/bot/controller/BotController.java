@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.videoplatform.bot.dto.NotificationBotRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
+import ru.videoplatform.bot.service.AsyncService;
 import ru.videoplatform.bot.service.BotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class BotController {
 
     private final BotService botService;
+    private final AsyncService asyncService;
     private final ObjectMapper telegramObjectMapper;
 
     @PostMapping("/event")
@@ -45,7 +47,7 @@ public class BotController {
     @PostMapping("/execute")
     public ResponseEntity<?> sendNotificationTelegramBot(
             @RequestBody NotificationBotRequestDto dto) {
-        botService.sendNotificationTelegramBot(dto);
+        asyncService.sendNotificationTelegramBot(dto);
         return ResponseEntity.ok().build();
     }
 

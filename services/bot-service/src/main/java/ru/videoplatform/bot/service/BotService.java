@@ -1,15 +1,10 @@
 package ru.videoplatform.bot.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.generics.TelegramClient;
-import ru.videoplatform.bot.dto.NotificationBotRequestDto;
 import ru.videoplatform.bot.dto.StudentRequestDto;
 import ru.videoplatform.bot.handler.CommandHandler;
 
@@ -22,11 +17,9 @@ import static ru.videoplatform.bot.handler.CommandHandler.TelegramData;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class BotService {
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final TelegramClient telegramClient;
     private final List<CommandHandler> allHandlers;
 
     public BotApiMethod<?> processTelegramEvent(String systemToken, Update update, StudentRequestDto dto) {
@@ -43,18 +36,6 @@ public class BotService {
                         parseTelegramData(update),
                         dto))
                 .orElse(null);
-    }
-
-    @Async
-    public void sendNotificationTelegramBot(NotificationBotRequestDto dto) {
-        var message = SendMessage.builder()
-                .chatId(dto.chatId())
-                .text(dto.message())
-                .build();
-
-        try {
-            telegramClient.execute(message);
-        } catch (Exception ignored) { }
     }
 
     public Map<String, String> createKeyForQrCode(String uuid) {
