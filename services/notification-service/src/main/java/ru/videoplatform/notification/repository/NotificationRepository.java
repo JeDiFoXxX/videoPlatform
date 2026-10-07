@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, String> {
+public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
     Optional<Notification> deleteByStartTime(Instant startTime);
 

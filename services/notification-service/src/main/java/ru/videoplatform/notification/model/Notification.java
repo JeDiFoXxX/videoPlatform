@@ -45,5 +45,4 @@ public class Notification {
                 dto.endTime()
         );
     }
-
 }

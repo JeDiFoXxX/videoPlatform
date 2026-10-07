@@ -16,7 +16,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createNotification(
+    public ResponseEntity<Void> createNotification(
             @RequestBody BookingNotificationRequestDto requestDto) {
         notificationService.createNotification(requestDto);
         return ResponseEntity.ok().build();
