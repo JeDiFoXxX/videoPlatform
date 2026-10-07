@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-import ru.videoplatform.signaling.service.SignalingService;
+import ru.videoplatform.signaling.storage.SessionStorage;
 import ru.videoplatform.signaling.websocket.WebSocketMessageCodec;
 
 @Component
 @RequiredArgsConstructor
 public class TeacherSignalingHandler implements SignalingHandler {
 
-    private final SignalingService signalingService;
+    private final SessionStorage sessionStorage;
     private final WebSocketMessageCodec messageCodec;
 
     @Override
@@ -22,8 +22,8 @@ public class TeacherSignalingHandler implements SignalingHandler {
     @Override
     public void handle(WebSocketSession session, TextMessage message) throws Exception {
         var dto = messageCodec.receiveMessage(message);
-        var studentSession = signalingService.getSession(dto.studentId(), "ROLE_STUDENT");
-        var isStudentOnline = studentSession != null && studentSession.isOpen();
+        var studentSession = sessionStorage.getStudentSession(dto.studentId());
+        boolean isStudentOnline = studentSession != null && studentSession.isOpen();
 
         switch (dto.event()) {
             case "start_call" -> {
