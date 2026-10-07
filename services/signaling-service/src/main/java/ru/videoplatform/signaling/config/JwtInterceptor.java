@@ -25,7 +25,7 @@ public class JwtInterceptor implements HandshakeInterceptor {
         if (request.getPrincipal() instanceof JwtAuthenticationToken jwt) {
             var userId = jwt.getToken().getSubject();
             var tokenData = objectMapper.convertValue(jwt.getTokenAttributes(), TokenAttribute.class);
-            var role = tokenData.role().roles().stream()
+            var role = tokenData.realmAccess().roles().stream()
                     .filter(r -> "ROLE_TEACHER".equals(r) || "ROLE_STUDENT".equals(r))
                     .findFirst()
                     .orElseThrow(IllegalStateException::new);
@@ -41,7 +41,7 @@ public class JwtInterceptor implements HandshakeInterceptor {
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                WebSocketHandler wsHandler, Exception exception) { }
 
-    private record TokenAttribute(@JsonProperty("realm_access") Role role) { }
+    private record TokenAttribute(@JsonProperty("realm_access") RealmAccess realmAccess) { }
 
-    private record Role(@JsonProperty("roles") List<String> roles) { }
+    private record RealmAccess(@JsonProperty("roles") List<String> roles) { }
 }
