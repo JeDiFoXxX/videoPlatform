@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.videoplatform.booking.dto.*;
-import ru.videoplatform.booking.model.BookingStatus;
-import ru.videoplatform.booking.service.AsyncNotificationService;
+import ru.videoplatform.booking.service.AsyncService;
 import ru.videoplatform.booking.service.BookingService;
 
 import java.time.Instant;
@@ -18,17 +17,20 @@ import java.util.UUID;
 public class BookingController {
 
     private final BookingService bookingService;
-    private final AsyncNotificationService notificationService;
+    private final AsyncService asyncService;
 
     @PostMapping("/create")
     public ResponseEntity<BookingBotResponseDto> createBooking(
             @RequestHeader("Authorization") String systemToken,
             @RequestBody BotBookingRequestDto requestDto) {
         var booking = bookingService.createBooking(requestDto);
-        notificationService.createNotificationAsync(
+        asyncService.createNotificationAsync(
                 systemToken,
                 BookingNotificationRequestDto.from(requestDto, booking.bookingId())
         );
+        asyncService.createSignalingAsync(
+                systemToken,
+                BookingCalendarResponseDto.from(booking));
         return ResponseEntity.ok(booking);
     }
 
@@ -55,7 +57,8 @@ public class BookingController {
             @RequestHeader("Authorization") String systemToken,
             @RequestParam("bookingId") UUID bookingId) {
         var deleteBooking = bookingService.deleteBooking(bookingId);
-        notificationService.deleteNotificationAsync(systemToken, bookingId);
+        asyncService.deleteNotificationAsync(systemToken, bookingId);
+        asyncService.deleteSignalingAsync(systemToken, bookingId);
         return ResponseEntity.ok(deleteBooking);
     }
 }

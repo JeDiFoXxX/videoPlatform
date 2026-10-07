@@ -22,7 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
         "spring.datasource.url=jdbc:tc:postgresql:17-alpine:///booking_db",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.liquibase.change-log=classpath:/db/changelog/db.changelog-master.xml",
-        "services.notification-service.uri=http://localhost:1111"
+        "services.notification-service.uri=http://localhost:1111",
+        "services.signaling-service.uri=http://localhost:2222"
 })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class BookingRepositoryTest {

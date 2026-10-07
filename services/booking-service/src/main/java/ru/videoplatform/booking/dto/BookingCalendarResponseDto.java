@@ -1,20 +1,32 @@
 package ru.videoplatform.booking.dto;
 
 import ru.videoplatform.booking.model.Booking;
-import ru.videoplatform.booking.model.BookingStatus;
 
 import java.time.Instant;
+import java.util.UUID;
 
-public record BookingCalendarResponseDto(String firstName, String lastName,
-                                         Instant startTime, Instant endTime, BookingStatus status) {
+public record BookingCalendarResponseDto(UUID bookingId, String firstName, String lastName,
+                                         Instant startTime, Instant endTime, String status) {
 
     public static BookingCalendarResponseDto from(Booking booking) {
         return new BookingCalendarResponseDto(
+                booking.getId(),
                 booking.getFirstName(),
                 booking.getLastName(),
                 booking.getStartTime(),
                 booking.getEndTime(),
-                booking.getStatus()
+                booking.getStatus().toString()
+        );
+    }
+
+    public static BookingCalendarResponseDto from(BookingBotResponseDto responseDto) {
+        return new BookingCalendarResponseDto(
+                responseDto.bookingId(),
+                responseDto.firstName(),
+                responseDto.lastName(),
+                responseDto.startTime(),
+                responseDto.endTime(),
+                responseDto.status()
         );
     }
 }
